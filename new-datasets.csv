@@ -1,0 +1,10 @@
+name,openml_id,link,n_features,n_numerical,n_categorical,n_instances,n_classes,n_missing_values
+Dorothea,4137,https://www.openml.org/d/4137,100001,100000,1,1150,2,0
+anthracyclineTaxaneChemotherapy,1085,https://www.openml.org/d/1085,61360,61359,1,159,2,0
+variousCancers_final,1088,https://www.openml.org/d/1088,54676,54675,1,383,9,0
+hepatitisC,1087,https://www.openml.org/d/1087,54622,54621,1,283,3,0
+Internet-Advertisements,40978,https://www.openml.org/d/40978,1559,3,1556,3279,2,0
+amazon-commerce-reviews,1457,https://www.openml.org/d/1457,10001,10000,1,1500,50,0
+christine,41142,https://www.openml.org/d/41142,1637,1599,38,5418,2,0
+SpeedDating,40536,https://www.openml.org/d/40536,121,59,62,8378,2,18372
+mnist_784,554,https://www.openml.org/d/554,785,784,1,70000,10,0
