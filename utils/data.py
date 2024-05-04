@@ -94,19 +94,59 @@ def read_dataset(dataset):
 def preprocess(df): #df is the dict from read_dataset_by_id
     
     df_pandas = df["features"]
+
     categorical_features = df['categorical'].tolist()
+    n_categorical = len(categorical_features)
+
     numerical_features = df['numerical'].tolist()
+    n_numerical = len(numerical_features)
 
-    numerical_features = df_pandas[numerical_features]  # Assuming numerical_features is a list of column names
-    categorical_features = df_pandas[categorical_features]  # Assuming categorical_features is a list of column names
+    numerical_features_df = df_pandas[numerical_features]  # Assuming numerical_features is a list of column names
+    categorical_features_df = df_pandas[categorical_features]  # Assuming categorical_features is a list of column names
 
-    df_ordered = pd.concat([numerical_features,categorical_features], axis=1) #ordered columns, first numerical then categorical
+    df_ordered = pd.concat([numerical_features_df,categorical_features_df], axis=1) #ordered columns, first numerical then categorical
 
     #this for loop creates a one-hot encoding for each categorical feature
     for col in categorical_features:
         df_ordered[col], _ = pd.factorize(df_ordered[col])
+    
+    # Find redundant numerical columns
+    redundant_columns_numerical = []
+    for column in numerical_features:
+        if df_ordered[column].nunique() == 1:  # Check if the column has only one unique value
+            redundant_columns_numerical.append(column)
+    
+    n_numerical = n_numerical - len(redundant_columns_numerical)
+
+    # Find redundant categorical columns
+    redundant_columns_categorical = []
+    for column in categorical_features:
+        if df_ordered[column].nunique() == 1:  # Check if the column has only one unique value
+            redundant_columns_categorical.append(column)
+    
+    n_categorical = n_categorical - len(redundant_columns_categorical)
+
+
+    # Drop redundant numerical columns
+    df_ordered.drop(redundant_columns_numerical, axis=1, inplace=True)
+
+    # Drop redundant categorical columns
+    df_ordered.drop(redundant_columns_categorical, axis=1, inplace=True)
 
     X = df_ordered.values
     y = df["outputs"].codes
+    
+    """
+    Dataset metadata definition.
 
-    return X, y #returns the features dataset as a numpy array and the target as a numpy array
+        n_instances: Number of instances (rows) in your dataset.
+        n_numerical: Number of numerical features in your dataset.
+        n_categorical: List of the number of categories for each categorical column.
+        n_labels: Number of classification labels.
+        
+    """
+
+    n_instances = X.shape[0]
+    n_labels = len(df["labels"].keys())
+
+    return X, y, n_instances, n_numerical, n_categorical, n_labels    #returns the features dataset as a numpy array and the target as a numpy array and meta data
