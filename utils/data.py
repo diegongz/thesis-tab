@@ -89,3 +89,24 @@ def read_dataset(dataset):
     data = data.sort_index()
     
     return data, dataset_meta
+
+
+def preprocess(df): #df is the dict from read_dataset_by_id
+    
+    df_pandas = df["features"]
+    categorical_features = df['categorical'].tolist()
+    numerical_features = df['numerical'].tolist()
+
+    numerical_features = df_pandas[numerical_features]  # Assuming numerical_features is a list of column names
+    categorical_features = df_pandas[categorical_features]  # Assuming categorical_features is a list of column names
+
+    df_ordered = pd.concat([numerical_features,categorical_features], axis=1) #ordered columns, first numerical then categorical
+
+    #this for loop creates a one-hot encoding for each categorical feature
+    for col in categorical_features:
+        df_ordered[col], _ = pd.factorize(df_ordered[col])
+
+    X = df_ordered.values
+    y = df["outputs"].codes
+
+    return X, y #returns the features dataset as a numpy array and the target as a numpy array
