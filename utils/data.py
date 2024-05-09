@@ -8,9 +8,7 @@ from . import log
 
 logger = log.get_logger()
 
-def read_dataset_by_id(
-    id
-    ):
+def read_dataset_by_id(id):
 
     dataset_info = openml.datasets.get_dataset(id, download_data=False)
     target = dataset_info.default_target_attribute
@@ -91,9 +89,25 @@ def read_dataset(dataset):
     return data, dataset_meta
 
 
-def preprocess(df): #df is the dict from read_dataset_by_id
+#id: is a number
+#type: it can be "task" or "ds_id" from OpenML
+
+#If we use the type is task we have as return the original partition of the task:
+# return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categorical
+
+#If the type is ds_id as this doesn't have any partition we return the whole dataset:
+# return X, y, n_instances, n_labels, n_numerical, n_categorical
+
+
+def import_data(id, type): #type can be task or id
+
+    if type == "task":
+        task = openml.tasks.get_task(id)
+        id = task.dataset_id
     
-    df_pandas = df["features"]
+    df = read_dataset_by_id(id)
+
+    X = df["features"]
 
     categorical_features = df['categorical'].tolist()
     n_categorical = len(categorical_features)
@@ -101,19 +115,19 @@ def preprocess(df): #df is the dict from read_dataset_by_id
     numerical_features = df['numerical'].tolist()
     n_numerical = len(numerical_features)
 
-    numerical_features_df = df_pandas[numerical_features]  # Assuming numerical_features is a list of column names
-    categorical_features_df = df_pandas[categorical_features]  # Assuming categorical_features is a list of column names
+    X_numerical = X[numerical_features]  # Assuming numerical_features is a list of column names
+    X_categorical = X[categorical_features]  # Assuming categorical_features is a list of column names
 
-    df_ordered = pd.concat([numerical_features_df,categorical_features_df], axis=1) #ordered columns, first numerical then categorical
+    X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical
 
     #this for loop creates a one-hot encoding for each categorical feature
     for col in categorical_features:
-        df_ordered[col], _ = pd.factorize(df_ordered[col])
+        X_ordered[col], _ = pd.factorize(df_ordered[col])
     
     # Find redundant numerical columns
     redundant_columns_numerical = []
     for column in numerical_features:
-        if df_ordered[column].nunique() == 1:  # Check if the column has only one unique value
+        if X_ordered[column].nunique() == 1:  # Check if the column has only one unique value
             redundant_columns_numerical.append(column)
     
     n_numerical = n_numerical - len(redundant_columns_numerical)
@@ -121,32 +135,35 @@ def preprocess(df): #df is the dict from read_dataset_by_id
     # Find redundant categorical columns
     redundant_columns_categorical = []
     for column in categorical_features:
-        if df_ordered[column].nunique() == 1:  # Check if the column has only one unique value
+        if X_ordered[column].nunique() == 1:  # Check if the column has only one unique value
             redundant_columns_categorical.append(column)
     
     n_categorical = n_categorical - len(redundant_columns_categorical)
 
 
     # Drop redundant numerical columns
-    df_ordered.drop(redundant_columns_numerical, axis=1, inplace=True)
+    X_ordered.drop(redundant_columns_numerical, axis=1, inplace=True)
 
     # Drop redundant categorical columns
-    df_ordered.drop(redundant_columns_categorical, axis=1, inplace=True)
+    X_ordered.drop(redundant_columns_categorical, axis=1, inplace=True)
 
-    X = df_ordered.values
     y = df["outputs"].codes
-    
-    """
-    Dataset metadata definition.
 
-        n_instances: Number of instances (rows) in your dataset.
-        n_numerical: Number of numerical features in your dataset.
-        n_categorical: List of the number of categories for each categorical column.
-        n_labels: Number of classification labels.
-        
-    """
-
-    n_instances = X.shape[0]
+    n_instances = X_ordered.shape[0]
     n_labels = len(df["labels"].keys())
 
-    return X, y, n_instances, n_numerical, n_categorical, n_labels    #returns the features dataset as a numpy array and the target as a numpy array and meta data
+    if type == "task":
+        train_indices, test_indices = task.get_train_test_split_indices() #get the indices of the task partition
+
+        X_train = X_ordered.iloc[train_indices].values
+        X_test = X_ordered.iloc[test_indices].values
+
+        y_train = y[train_indices]
+        y_test = y[test_indices]
+
+        return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categorical
+    
+    else:
+        X = X_ordered.values
+
+        return X, y, n_instances, n_labels, n_numerical, n_categorical
