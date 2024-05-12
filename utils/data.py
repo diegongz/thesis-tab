@@ -110,7 +110,8 @@ def import_data(id, type): #type can be task or id
     X = df["features"]
 
     categorical_features = df['categorical'].tolist()
-    n_categorical = len(categorical_features)
+    #n_categorical = len(categorical_features)
+    n_categories = df['n_categorical'] #list of number of categories for each categorical feature
 
     numerical_features = df['numerical'].tolist()
     n_numerical = len(numerical_features)
@@ -124,6 +125,7 @@ def import_data(id, type): #type can be task or id
     for col in categorical_features:
         X_ordered[col], _ = pd.factorize(df_ordered[col])
     
+    '''
     # Find redundant numerical columns
     redundant_columns_numerical = []
     for column in numerical_features:
@@ -132,6 +134,7 @@ def import_data(id, type): #type can be task or id
     
     n_numerical = n_numerical - len(redundant_columns_numerical)
 
+    
     # Find redundant categorical columns
     redundant_columns_categorical = []
     for column in categorical_features:
@@ -139,6 +142,7 @@ def import_data(id, type): #type can be task or id
             redundant_columns_categorical.append(column)
     
     n_categorical = n_categorical - len(redundant_columns_categorical)
+    n_categorical = n_categorical.tolist()
 
 
     # Drop redundant numerical columns
@@ -146,6 +150,7 @@ def import_data(id, type): #type can be task or id
 
     # Drop redundant categorical columns
     X_ordered.drop(redundant_columns_categorical, axis=1, inplace=True)
+    '''
 
     y = df["outputs"].codes
 
@@ -161,9 +166,18 @@ def import_data(id, type): #type can be task or id
         y_train = y[train_indices]
         y_test = y[test_indices]
 
-        return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categorical
+        return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories
     
     else:
         X = X_ordered.values
 
-        return X, y, n_instances, n_labels, n_numerical, n_categorical
+        return X, y, n_instances, n_labels, n_numerical, n_categories
+    
+
+def get_dataset_name(task_id):
+    task = openml.tasks.get_task(task_id)
+    dataset_id = task.dataset_id
+    dataset = openml.datasets.get_dataset(dataset_id)
+    dataset_name = dataset.name
+    
+    return dataset_name

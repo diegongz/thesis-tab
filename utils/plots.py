@@ -31,7 +31,7 @@ def model_plots(model):
         epoch_num = x["epoch"]
         epochs.append(epoch_num)
 
-        train_acc.append(x["accuracy"])
+        train_acc.append(x['train_acc'])
         val_acc.append(x['valid_acc'])
 
         train_loss.append(x["train_loss"])
@@ -40,9 +40,10 @@ def model_plots(model):
     fig_1 = line_plot(epochs, train_acc, val_acc, "train_acc", "val_acc")
     fig_2 = line_plot(epochs,train_loss,val_loss, "train_loss", "val_loss")
     
-    plt.show(fig_1)
-    plt.show(fig_2)
+    #plt.show(fig_1)
+    #plt.show(fig_2)
 
+    return fig_1, fig_2
 
     
 
