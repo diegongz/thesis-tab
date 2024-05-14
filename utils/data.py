@@ -110,6 +110,7 @@ def import_data(id, type): #type can be task or id
     X = df["features"]
 
     categorical_features = df['categorical'].tolist()
+    print(categorical_features)
     #n_categorical = len(categorical_features)
     n_categories = df['n_categorical'] #list of number of categories for each categorical feature
 
@@ -120,10 +121,12 @@ def import_data(id, type): #type can be task or id
     X_categorical = X[categorical_features]  # Assuming categorical_features is a list of column names
 
     X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical
-
+    
+    '''
     #this for loop creates a one-hot encoding for each categorical feature
     for col in categorical_features:
-        X_ordered[col], _ = pd.factorize(df_ordered[col])
+        X_ordered[col], _ = pd.factorize(X_ordered[col])
+    '''
     
     '''
     # Find redundant numerical columns
