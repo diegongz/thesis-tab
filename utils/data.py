@@ -1,6 +1,8 @@
 import numpy as np
 import os
+from sklearn import datasets, model_selection
 import pandas as pd
+from sklearn.impute import KNNImputer
 import openml
 import json 
 from config import DATA_BASE_DIR
@@ -99,34 +101,41 @@ def read_dataset(dataset):
 # return X, y, n_instances, n_labels, n_numerical, n_categorical
 
 
-def import_data(id, type): #type can be task or id
+def import_data(id): #type can be task or id
 
+    ''' 
     if type == "task":
         task = openml.tasks.get_task(id)
         id = task.dataset_id
-    
+    '''
+    task = openml.tasks.get_task(id)
+    id = task.dataset_id #suppose we input the task id 
     df = read_dataset_by_id(id)
 
     X = df["features"]
 
-    categorical_features = df['categorical'].tolist()
-    print(categorical_features)
+    categorical_features = df['categorical'].tolist() #list with the names of the categorical features
     #n_categorical = len(categorical_features)
     n_categories = df['n_categorical'] #list of number of categories for each categorical feature
 
-    numerical_features = df['numerical'].tolist()
+    numerical_features = df['numerical'].tolist() #list with the names of the numerical features
     n_numerical = len(numerical_features)
 
     X_numerical = X[numerical_features]  # Assuming numerical_features is a list of column names
     X_categorical = X[categorical_features]  # Assuming categorical_features is a list of column names
 
-    X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical
+    #Fix missing values
     
-    '''
     #this for loop creates a one-hot encoding for each categorical feature
     for col in categorical_features:
-        X_ordered[col], _ = pd.factorize(X_ordered[col])
-    '''
+        X_categorical[col], _ = pd.factorize(X_categorical[col])
+        
+    # Impute missing values in numerical features USING KNN IMPUTER
+    imputer = KNNImputer(n_neighbors=10)
+    numerical_imputed = imputer.fit_transform(X_numerical)
+    X_numerical = pd.DataFrame(numerical_imputed, columns=X_numerical.columns) # Convert NumPy array back to Pandas DataFrame
+
+    X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical
     
     '''
     # Find redundant numerical columns
@@ -160,6 +169,17 @@ def import_data(id, type): #type can be task or id
     n_instances = X_ordered.shape[0]
     n_labels = len(df["labels"].keys())
 
+
+    #Let's split the dataset into train and test partitions using seed = 11
+    seed = 11
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed)
+    
+    X_train = X_train.values
+    X_test = X_test.values
+
+    return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories
+    
+    '''
     if type == "task":
         train_indices, test_indices = task.get_train_test_split_indices() #get the indices of the task partition
 
@@ -175,6 +195,7 @@ def import_data(id, type): #type can be task or id
         X = X_ordered.values
 
         return X, y, n_instances, n_labels, n_numerical, n_categories
+    '''
     
 
 def get_dataset_name(task_id):
