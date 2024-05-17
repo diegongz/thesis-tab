@@ -1,0 +1,2 @@
+dataset_name,experiment_num,n_layers,n_heads,embed_dim,batch_size,balanced_accuracy,accuracy,log_loss
+mfeat-factors,1,2,4,128,256,0.1,0.115,2.312014307752299

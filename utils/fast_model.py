@@ -16,7 +16,6 @@ from sklearn import datasets, model_selection
 from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScoring, Checkpoint, TrainEndCheckpoint
 import csv
 
-
 def create_parameters(task_id, Layers, Heads, Emedding_dim, batch_size, epochs):
     
     parameters = {
@@ -70,8 +69,7 @@ def model_creation(parameters, project_path):
     batch_size = parameters["batch_size"]
     epochs = parameters["epochs"]
     
-    total_combs = len(Layers)*len(Heads)
-    columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "max_epochs"]
+    columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss"]
     results_table = []
 
     #parameters for the model
@@ -100,7 +98,7 @@ def model_creation(parameters, project_path):
 
     #create the folder for specific dataset name
     new_folder(path_of_data_models, f"{dataset_name}_{embed_dim}")
-    path_of_dataset = os.path.join(path_of_data_models, f"{dataset_name}_{embed_dim}")
+    path_of_dataset = os.path.join(path_of_data_models, f"{dataset_name}_{embed_dim}") #path of the folder dataset 
 
     #save a .txt in the folder to sava the validation indices
     np.savetxt(os.path.join(path_of_dataset, "validation_indices"), val_indices)
@@ -146,7 +144,7 @@ def model_creation(parameters, project_path):
                 module=module,
                 criterion=torch.nn.CrossEntropyLoss,
                 optimizer=torch.optim.AdamW,
-                device="cuda" if torch.cuda.is_available() else "cpu",
+                device = "cuda", #if torch.cuda.is_available() else "cpu",
                 batch_size = batch_size,
                 max_epochs = epochs,
                 train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
@@ -154,8 +152,8 @@ def model_creation(parameters, project_path):
                     ("balanced_accuracy", skorch.callbacks.EpochScoring("balanced_accuracy", lower_is_better=False)),
                     ("duration", skorch.callbacks.EpochTimer()),
                     EpochScoring(scoring='accuracy', name='train_acc', on_train=True),
-                    Checkpoint(monitor='valid_acc_best',dirname = path_of_checkpoint, load_best = True),
-                    EarlyStopping(patience = 15)
+                    Checkpoint(monitor='valid_acc_best',dirname=path_of_checkpoint,load_best = True),
+                    EarlyStopping(patience=15)
 
                 ],
                 optimizer__lr=1e-4,
@@ -190,7 +188,7 @@ def model_creation(parameters, project_path):
             log_loss = evaluating.get_default_scores(y_test, predictions, multiclass=True)["log_loss"]
 
             #save the results in a list
-            result_row = [dataset_name, experiment_num, n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss, epochs]
+            result_row = [dataset_name, experiment_num, n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss]
             results_table.append(result_row)
 
             #create and save the plots
