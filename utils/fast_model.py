@@ -89,8 +89,7 @@ def model_creation(parameters, project_path):
 
     X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories = data.import_data(task_id)
     #getting validation indices
-    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=0.333) #1/9 of train is equal to 10% of total
-
+    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, stratify=y_train) #1/3 of train is equal to 20% of total
 
     #create the folder to save the dataset experiments if it doesn't exist
     new_folder(project_path, "data_models")
@@ -144,7 +143,7 @@ def model_creation(parameters, project_path):
                 module=module,
                 criterion=torch.nn.CrossEntropyLoss,
                 optimizer=torch.optim.AdamW,
-                device = "cuda", #if torch.cuda.is_available() else "cpu",
+                device = "cpu", #if torch.cuda.is_available() else "cpu",
                 batch_size = batch_size,
                 max_epochs = epochs,
                 train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),

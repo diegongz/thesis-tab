@@ -101,7 +101,7 @@ def read_dataset(dataset):
 # return X, y, n_instances, n_labels, n_numerical, n_categorical
 
 
-def import_data(id): #type can be task or id
+def import_data(id): #we want to use the task id
 
     ''' 
     if type == "task":
@@ -128,7 +128,8 @@ def import_data(id): #type can be task or id
     
     #this for loop creates a one-hot encoding for each categorical feature
     for col in categorical_features:
-        X_categorical[col], _ = pd.factorize(X_categorical[col])
+        X_categorical[col] = X_categorical[col].astype('category').cat.codes + 1
+        X_categorical[col] = X_categorical[col].fillna(0)
         
     # Impute missing values in numerical features USING KNN IMPUTER
     imputer = KNNImputer(n_neighbors=10)
@@ -172,7 +173,7 @@ def import_data(id): #type can be task or id
 
     #Let's split the dataset into train and test partitions using seed = 11
     seed = 11
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed)
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify=y)
     
     X_train = X_train.values
     X_test = X_test.values
