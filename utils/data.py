@@ -101,6 +101,7 @@ def read_dataset(dataset):
 # return X, y, n_instances, n_labels, n_numerical, n_categorical
 
 
+
 def import_data(id): #we want to use the task id
 
     ''' 
@@ -116,54 +117,31 @@ def import_data(id): #we want to use the task id
 
     categorical_features = df['categorical'].tolist() #list with the names of the categorical features
     #n_categorical = len(categorical_features)
-    n_categories = df['n_categorical'] #list of number of categories for each categorical feature
+    #n_categories = df['n_categorical'] #list of number of categories for each categorical feature
 
     numerical_features = df['numerical'].tolist() #list with the names of the numerical features
-    n_numerical = len(numerical_features)
+    n_numerical = df["n_numerical"]
 
     X_numerical = X[numerical_features]  # Assuming numerical_features is a list of column names
     X_categorical = X[categorical_features]  # Assuming categorical_features is a list of column names
 
+    unique_value_counts = X_categorical.nunique()
+    n_categories = unique_value_counts.values
+
+    
     #Fix missing values
+    #Fix numerical missing values
+
+    if X_numerical.isnull().values.any():
+        imputer = KNNImputer(n_neighbors=10)
+        numerical_imputed = imputer.fit_transform(X_numerical)
+
+    if X_categorical.isnull().values.any():
+        print("There are missing values in the categorical features")
+
     
-    #this for loop creates a one-hot encoding for each categorical feature
-    for col in categorical_features:
-        X_categorical[col] = X_categorical[col].astype('category').cat.codes + 1
-        X_categorical[col] = X_categorical[col].fillna(0)
-        
-    # Impute missing values in numerical features USING KNN IMPUTER
-    imputer = KNNImputer(n_neighbors=10)
-    numerical_imputed = imputer.fit_transform(X_numerical)
     X_numerical = pd.DataFrame(numerical_imputed, columns=X_numerical.columns) # Convert NumPy array back to Pandas DataFrame
-
-    X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical
-    
-    '''
-    # Find redundant numerical columns
-    redundant_columns_numerical = []
-    for column in numerical_features:
-        if X_ordered[column].nunique() == 1:  # Check if the column has only one unique value
-            redundant_columns_numerical.append(column)
-    
-    n_numerical = n_numerical - len(redundant_columns_numerical)
-
-    
-    # Find redundant categorical columns
-    redundant_columns_categorical = []
-    for column in categorical_features:
-        if X_ordered[column].nunique() == 1:  # Check if the column has only one unique value
-            redundant_columns_categorical.append(column)
-    
-    n_categorical = n_categorical - len(redundant_columns_categorical)
-    n_categorical = n_categorical.tolist()
-
-
-    # Drop redundant numerical columns
-    X_ordered.drop(redundant_columns_numerical, axis=1, inplace=True)
-
-    # Drop redundant categorical columns
-    X_ordered.drop(redundant_columns_categorical, axis=1, inplace=True)
-    '''
+    X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical    
 
     y = df["outputs"].codes
 
@@ -180,24 +158,27 @@ def import_data(id): #we want to use the task id
 
     return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories
     
-    '''
-    if type == "task":
-        train_indices, test_indices = task.get_train_test_split_indices() #get the indices of the task partition
-
-        X_train = X_ordered.iloc[train_indices].values
-        X_test = X_ordered.iloc[test_indices].values
-
-        y_train = y[train_indices]
-        y_test = y[test_indices]
-
-        return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories
     
-    else:
-        X = X_ordered.values
+    ''' 
+    for col in categorical_features:
+        # Factorize the column
+        labels, _ = pd.factorize(X_categorical[col])
 
-        return X, y, n_instances, n_labels, n_numerical, n_categories
-    '''
+        # Convert labels to a categorical array
+        categorical_labels = pd.Categorical(labels, categories=_, ordered=False)
+
+        # Assign the categorical values back to the DataFrame
+        X_categorical.loc[:, col] = categorical_labels
     
+    # Factorize categorical features
+    for col in categorical_features:
+        X_categorical.loc[:, col], _ = pd.factorize(X_categorical[col])
+
+    for col in X_categorical.columns:
+        # Add 1 to each value in the column
+        X_categorical[col] = X_categorical[col] + 1
+    '''
+       
 
 def get_dataset_name(task_id):
     task = openml.tasks.get_task(task_id)
