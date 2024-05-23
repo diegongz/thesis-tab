@@ -7,6 +7,8 @@ import openml
 import json 
 from config import DATA_BASE_DIR
 from . import log
+from sklearn.preprocessing import LabelEncoder #to create one hot encoding for categorical variables
+
 
 logger = log.get_logger()
 

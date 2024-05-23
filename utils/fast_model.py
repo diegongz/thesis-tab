@@ -87,9 +87,7 @@ def model_creation(parameters, project_path):
     #get the dataset_name
     dataset_name = data.get_dataset_name(task_id)
 
-    X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories = data.import_data(task_id)
-    #getting validation indices
-    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, stratify=y_train) #1/3 of train is equal to 20% of total
+    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id)
 
     #create the folder to save the dataset experiments if it doesn't exist
     new_folder(project_path, "data_models")
@@ -150,8 +148,9 @@ def model_creation(parameters, project_path):
                 callbacks=[
                     ("balanced_accuracy", skorch.callbacks.EpochScoring("balanced_accuracy", lower_is_better=False)),
                     ("duration", skorch.callbacks.EpochTimer()),
-                    EpochScoring(scoring='accuracy', name='train_acc', on_train=True),
-                    Checkpoint(monitor='valid_acc_best',dirname=path_of_checkpoint,load_best = True),
+                    ("accuracy", skorch.callbacks.EpochScoring("accuracy", lower_is_better=False)),
+                    EpochScoring(scoring='accuracy', name='train_acc', on_train=True), # Compute accuracy at the end of each epoch on the training set
+                    Checkpoint(dirname= path_of_checkpoint,load_best = True),
                     EarlyStopping(patience=15)
 
                 ],
@@ -199,7 +198,7 @@ def model_creation(parameters, project_path):
             # Save the second figure
             fig_2.savefig(os.path.join(path_of_plots, 'figure2.png'))
 
-            #increase experiment number
+            #increase experiment number, this one is used for the plots
             experiment_num += 1
 
 
