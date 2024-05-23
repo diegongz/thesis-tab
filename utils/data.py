@@ -104,59 +104,61 @@ def read_dataset(dataset):
 
 def import_data(id): #we want to use the task id
 
-    ''' 
-    if type == "task":
-        task = openml.tasks.get_task(id)
-        id = task.dataset_id
-    '''
-    task = openml.tasks.get_task(id)
-    id = task.dataset_id #suppose we input the task id 
-    df = read_dataset_by_id(id)
+    task_id = id
+    task = openml.tasks.get_task(task_id)
+    dataset_id = task.dataset_id #suppose we input the task id 
+    df = read_dataset_by_id(dataset_id)
 
-    X = df["features"]
+    X = df["features"] #features
+    y = df["outputs"].codes #outputs
 
-    categorical_features = df['categorical'].tolist() #list with the names of the categorical features
-    #n_categorical = len(categorical_features)
-    #n_categories = df['n_categorical'] #list of number of categories for each categorical feature
+    categorical_features = df['categorical'].tolist() #name of the categorical features
+    numerical_features = df['numerical'].tolist() #name of the numerical features
 
-    numerical_features = df['numerical'].tolist() #list with the names of the numerical features
-    n_numerical = df["n_numerical"]
+    # Create numerical and categorical datasets
+    X_categorical = X[categorical_features]  # Categorical features
+    X_numerical = X[numerical_features]     # Numerical features
 
-    X_numerical = X[numerical_features]  # Assuming numerical_features is a list of column names
-    X_categorical = X[categorical_features]  # Assuming categorical_features is a list of column names
 
-    unique_value_counts = X_categorical.nunique()
-    n_categories = unique_value_counts.values
-
-    
     #Fix missing values
-    #Fix numerical missing values
-
     if X_numerical.isnull().values.any():
         imputer = KNNImputer(n_neighbors=10)
         numerical_imputed = imputer.fit_transform(X_numerical)
-
-    if X_categorical.isnull().values.any():
-        print("There are missing values in the categorical features")
+        X_numerical = pd.DataFrame(numerical_imputed, columns=X_numerical.columns) # Convert NumPy array back to Pandas DataFrame
 
     
-    X_numerical = pd.DataFrame(numerical_imputed, columns=X_numerical.columns) # Convert NumPy array back to Pandas DataFrame
-    X_ordered = pd.concat([X_numerical, X_categorical], axis=1) #ordered columns, first numerical then categorical    
+    # Filter out categorical columns with only one unique value
+    redundant_columns = [col for col in X_categorical.columns if X_categorical[col].nunique() <= 1]
+    X_categorical = X_categorical.drop(columns=redundant_columns)
 
-    y = df["outputs"].codes
+    # Recompute categorical features after filtering
+    categorical_features = [col for col in categorical_features if col not in redundant_columns]
+
+    # Create a LabelEncoder object
+    le = LabelEncoder()
+    for col in X_categorical.columns:
+        X_categorical[col] = le.fit_transform(X_categorical[col].astype(str))
+
+
+    X_ordered = pd.concat([X_numerical, X_categorical], axis=1)
+
 
     n_instances = X_ordered.shape[0]
-    n_labels = len(df["labels"].keys())
+    n_numerical = X_numerical.shape[1]
+    n_categories = [X_categorical[col].nunique() for col in X_categorical.columns] #list that tells the number of categories for each categorical feature
+    n_labels = len(df["labels"].keys()) #number of labels
 
-
-    #Let's split the dataset into train and test partitions using seed = 11
     seed = 11
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify=y)
-    
-    X_train = X_train.values
-    X_test = X_test.values
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_ordered, y, test_size=0.20, random_state= seed, stratify=y)
 
-    return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categories
+    X_train = X_train.values.astype(np.float32)
+    X_test = X_test.values.astype(np.float32)
+
+
+    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, stratify=y_train) #1/3 of train is equal to 20% of total
+
+
+    return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
     
     
     ''' 
