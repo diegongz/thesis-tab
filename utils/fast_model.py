@@ -69,7 +69,7 @@ def model_creation(parameters, project_path):
     batch_size = parameters["batch_size"]
     epochs = parameters["epochs"]
     
-    columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss"]
+    columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "epochs", "time"]
     results_table = []
 
     #parameters for the model
@@ -89,6 +89,13 @@ def model_creation(parameters, project_path):
 
     X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id)
 
+    if len(np.unique(y_train)) > 2:
+        multiclass_val = True
+    
+    else:
+        multiclass_val = False
+    
+
     #create the folder to save the dataset experiments if it doesn't exist
     new_folder(project_path, "data_models")
     path_of_data_models = os.path.join(project_path, "data_models") #path of the folder data_models
@@ -97,7 +104,7 @@ def model_creation(parameters, project_path):
     new_folder(path_of_data_models, f"{dataset_name}_{embed_dim}")
     path_of_dataset = os.path.join(path_of_data_models, f"{dataset_name}_{embed_dim}") #path of the folder dataset 
 
-    #save a .txt in the folder to sava the validation indices
+    #save a .txt in the folder to save the validation indices
     np.savetxt(os.path.join(path_of_dataset, "validation_indices"), val_indices)
     
     experiment_num = 1
@@ -154,7 +161,7 @@ def model_creation(parameters, project_path):
                     EarlyStopping(patience=15)
 
                 ],
-                optimizer__lr=1e-4,
+                optimizer__lr=1e-3,
                 optimizer__weight_decay=1e-4
             )
 
@@ -179,11 +186,11 @@ def model_creation(parameters, project_path):
                             )
             
             print("Test results:\n")
-            print(evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass=True))
+            print(evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val))
             
-            balanced_accuracy = evaluating.get_default_scores(y_test, predictions, multiclass=True)["balanced_accuracy"]
-            accuracy = evaluating.get_default_scores(y_test, predictions, multiclass=True)["accuracy"]
-            log_loss = evaluating.get_default_scores(y_test, predictions, multiclass=True)["log_loss"]
+            balanced_accuracy = evaluating.get_default_scores(y_test, predictions, multiclass = multiclass_val)["balanced_accuracy"]
+            accuracy = evaluating.get_default_scores(y_test, predictions, multiclass = multiclass_val)["accuracy"]
+            log_loss = evaluating.get_default_scores(y_test, predictions, multiclass = multiclass_val)["log_loss"]
 
             #save the results in a list
             result_row = [dataset_name, experiment_num, n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss]

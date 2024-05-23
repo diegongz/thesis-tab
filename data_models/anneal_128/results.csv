@@ -1,0 +1,2 @@
+dataset_name,experiment_num,n_layers,n_heads,embed_dim,batch_size,balanced_accuracy,accuracy,log_loss,epochs,time
+anneal,1,2,4,128,512,0.7813110612015721,0.95,0.30801456975880137
