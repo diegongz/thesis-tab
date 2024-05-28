@@ -92,16 +92,19 @@ def read_dataset(dataset):
     
     return data, dataset_meta
 
+#We take a numeric dataset, we will compute mean and std for each column and we will normalize the data
+def mean_and_std(df):
+    #Calculate mean and standard deviation
+    mean = df.mean()
+    std = df.std()
 
-#id: is a number
-#type: it can be "task" or "ds_id" from OpenML
+    return mean, std
 
-#If we use the type is task we have as return the original partition of the task:
-# return X_train, X_test, y_train, y_test, n_instances, n_labels, n_numerical, n_categorical
+def normalize(df, mean, std):
+    #Normalize the data
+    df_normalized = (df - mean) / std
 
-#If the type is ds_id as this doesn't have any partition we return the whole dataset:
-# return X, y, n_instances, n_labels, n_numerical, n_categorical
-
+    return df_normalized
 
 
 def import_data(id): #we want to use the task id
@@ -113,75 +116,101 @@ def import_data(id): #we want to use the task id
 
     X = df["features"] #features
     y = df["outputs"].codes #outputs
-
+    
     categorical_features = df['categorical'].tolist() #name of the categorical features
     numerical_features = df['numerical'].tolist() #name of the numerical features
 
-    # Create numerical and categorical datasets
-    X_categorical = X[categorical_features]  # Categorical features
-    X_numerical = X[numerical_features]     # Numerical features
+    # Split the data into training and testing sets
+    seed = 11
+    #the "_prev" is because I will use that set to split again and obtain validaiton and train
+    X_train_prev, X_test_prev, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify=y)
 
+    indices_X_train_prev = X_train_prev.index.tolist() #indices of X_train 
+    test_indices = X_test_prev.index.tolist() #indices of X_test
 
-    #Fix missing values
-    if X_numerical.isnull().values.any():
-        imputer = KNNImputer(n_neighbors=10)
-        numerical_imputed = imputer.fit_transform(X_numerical)
-        X_numerical = pd.DataFrame(numerical_imputed, columns=X_numerical.columns) # Convert NumPy array back to Pandas DataFrame
+    train_indices, val_indices = model_selection.train_test_split(indices_X_train_prev, test_size=1/3, stratify=y_train) #1/3 of train is equal to 20% of total
 
-    
+    complement_indices = val_indices + test_indices #indices of complemnt of training (validation and test indices) 
+
+    X_train = X_train_prev.loc[train_indices] #training set
+
+    X_train_cat = X_train[categorical_features] #training categorical
+    X_train_num = X_train[numerical_features] #training numerical
+
+    X_train_complement =  X.loc[complement_indices]
+
+    X_train_complement_cat = X_train_complement[categorical_features]
+    X_train_complement_num = X_train_complement[numerical_features]
+
+    ''' 
+    Let's impute the missing values in the numerical data with KNN imputer.
+    Using the trainning for the imputer in trainning will be used to impute the Validation and Test set
+    After that I will normalize the data
+    '''
+    imputer = KNNImputer(n_neighbors=10)
+    X_train_num_imputed = imputer.fit_transform(X_train_num) #this returns a numpy array
+
+    X_train_complement_num_imputed = imputer.transform(X_train_complement_num)
+
+    # Convert NumPy array back to Pandas DataFrame
+    X_train_num = pd.DataFrame(X_train_num_imputed, columns=X_train_num.columns, index=X_train_num.index) #turnback to pandas
+    X_train_complement_num = pd.DataFrame(X_train_complement_num_imputed, columns=X_train_num.columns, index=X_train_complement_num.index) #turnback to pandas
+
+    #normalize the data
+    mean, std = mean_and_std(X_train_num)
+    X_train_num = normalize(X_train_num, mean, std)
+    X_train_complement_num = normalize(X_train_complement_num, mean, std) #standarize with respect of the training set
+
+    #Turn back the Numerical splits
+    X_val_num = X_train_complement_num.loc[val_indices] #Numerical validation set
+    X_test_num = X_train_complement_num.loc[test_indices] #Numerical test set
+
+    '''
+    Now I will work with the categorical datasets
+    Given that for all missing categorical I just need to add -1 to NA then I can merge Train, Val and test
+    '''
+
+    X_cat = pd.concat([X_train_cat, X_train_complement_cat], axis=0) #concatenate the categorical data
+
     # Filter out categorical columns with only one unique value
-    redundant_columns = [col for col in X_categorical.columns if X_categorical[col].nunique() <= 1]
-    X_categorical = X_categorical.drop(columns=redundant_columns)
+    redundant_columns = [col for col in X_cat.columns if X_cat[col].nunique() <= 1]
+    X_cat = X_cat.drop(columns=redundant_columns)
 
     # Recompute categorical features after filtering
     categorical_features = [col for col in categorical_features if col not in redundant_columns]
 
     # Create a LabelEncoder object
     le = LabelEncoder()
-    for col in X_categorical.columns:
-        X_categorical[col] = le.fit_transform(X_categorical[col].astype(str))
+    for col in X_cat.columns:
+        X_cat[col] = le.fit_transform(X_cat[col].astype(str))
 
+    #Get the respective splits
+    X_train_cat = X_cat.iloc[train_indices] #Categorical train set
+    X_val_cat = X_cat.iloc[val_indices] #Categorical validation set
+    X_test_cat = X_cat.iloc[test_indices] #Categorical test set
 
-    X_ordered = pd.concat([X_numerical, X_categorical], axis=1)
+    #concatenate the numerical and categorical splits
+    X_train_final = pd.concat([X_train_num, X_train_cat], axis=1)
+    X_val = pd.concat([X_val_num, X_val_cat], axis=1)
+    X_test = pd.concat([X_test_num, X_test_cat], axis=1)
 
+    X_train = pd.concat([X_train_final, X_val], axis=0)
 
-    n_instances = X_ordered.shape[0]
-    n_numerical = X_numerical.shape[1]
-    n_categories = [X_categorical[col].nunique() for col in X_categorical.columns] #list that tells the number of categories for each categorical feature
+    n_instances = X.shape[0]
+    n_numerical = X_train_num.shape[1]
+    n_categories = [X_cat[col].nunique() for col in X_cat.columns] #list that tells the number of categories for each categorical feature
     n_labels = len(df["labels"].keys()) #number of labels
 
-    seed = 11
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_ordered, y, test_size=0.20, random_state= seed, stratify=y)
 
-    X_train = X_train.values.astype(np.float32)
-    X_test = X_test.values.astype(np.float32)
+    #X_train = X_train.values.astype(np.float32)
+    #X_test = X_test.values.astype(np.float32)
 
-
-    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, stratify=y_train) #1/3 of train is equal to 20% of total
+    #seed = 11
+    #X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify=y)
 
 
     return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
-    
-    
-    ''' 
-    for col in categorical_features:
-        # Factorize the column
-        labels, _ = pd.factorize(X_categorical[col])
 
-        # Convert labels to a categorical array
-        categorical_labels = pd.Categorical(labels, categories=_, ordered=False)
-
-        # Assign the categorical values back to the DataFrame
-        X_categorical.loc[:, col] = categorical_labels
-    
-    # Factorize categorical features
-    for col in categorical_features:
-        X_categorical.loc[:, col], _ = pd.factorize(X_categorical[col])
-
-    for col in X_categorical.columns:
-        # Add 1 to each value in the column
-        X_categorical[col] = X_categorical[col] + 1
-    '''
        
 
 def get_dataset_name(task_id):

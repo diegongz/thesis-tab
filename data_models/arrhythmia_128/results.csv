@@ -1,2 +1,0 @@
-dataset_name,experiment_num,n_layers,n_heads,embed_dim,batch_size,balanced_accuracy,accuracy,log_loss,epochs,time
-arrhythmia,1,2,4,128,512,0.14537037037037037,0.6153846153846154,1.4665118192025761
