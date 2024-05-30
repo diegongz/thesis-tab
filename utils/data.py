@@ -8,6 +8,7 @@ import json
 from config import DATA_BASE_DIR
 from . import log
 from sklearn.preprocessing import LabelEncoder #to create one hot encoding for categorical variables
+import matplotlib.pyplot as plt
 
 
 logger = log.get_logger()
@@ -106,6 +107,19 @@ def normalize(df, mean, std):
 
     return df_normalized
 
+def plot_distribution(x):
+    # Create a histogram
+    plt.hist(x, bins=np.arange(min(x), max(x) + 1.5) - 0.5, edgecolor='black', alpha=0.7)
+
+    # Add labels and title
+    plt.xlabel('Values')
+    plt.ylabel('Frequency')
+    plt.title('Values Distribution')
+
+    # Show the plot
+    plt.show()
+
+
 
 def import_data(id): #we want to use the task id
 
@@ -116,6 +130,7 @@ def import_data(id): #we want to use the task id
 
     X = df["features"] #features
     y = df["outputs"].codes #outputs
+
     
     categorical_features = df['categorical'].tolist() #name of the categorical features
     numerical_features = df['numerical'].tolist() #name of the numerical features
@@ -130,6 +145,11 @@ def import_data(id): #we want to use the task id
 
     train_indices, val_indices = model_selection.train_test_split(indices_X_train_prev, test_size=1/3, stratify=y_train) #1/3 of train is equal to 20% of total
 
+    #train_indices converted to the original indices np.arange(X_train.shape[0])
+    #this indices are the ones we have to return such that it works in the tabtrans
+    train_indices_return = [X_train_prev.index.get_loc(idx) for idx in train_indices]
+    val_indices_return = [X_train_prev.index.get_loc(idx) for idx in val_indices] 
+    
     complement_indices = val_indices + test_indices #indices of complemnt of training (validation and test indices) 
 
     X_train = X_train_prev.loc[train_indices] #training set
@@ -149,7 +169,6 @@ def import_data(id): #we want to use the task id
     '''
     imputer = KNNImputer(n_neighbors=10)
     X_train_num_imputed = imputer.fit_transform(X_train_num) #this returns a numpy array
-
     X_train_complement_num_imputed = imputer.transform(X_train_complement_num)
 
     # Convert NumPy array back to Pandas DataFrame
@@ -165,6 +184,10 @@ def import_data(id): #we want to use the task id
     X_val_num = X_train_complement_num.loc[val_indices] #Numerical validation set
     X_test_num = X_train_complement_num.loc[test_indices] #Numerical test set
 
+
+    X_train_num_final = pd.concat([X_train_num, X_val_num], axis=0) #concatenate the numerical data
+    
+    
     '''
     Now I will work with the categorical datasets
     Given that for all missing categorical I just need to add -1 to NA then I can merge Train, Val and test
@@ -185,11 +208,17 @@ def import_data(id): #we want to use the task id
         X_cat[col] = le.fit_transform(X_cat[col].astype(str))
 
     #Get the respective splits
-    X_train_cat = X_cat.iloc[train_indices] #Categorical train set
-    X_val_cat = X_cat.iloc[val_indices] #Categorical validation set
-    X_test_cat = X_cat.iloc[test_indices] #Categorical test set
+    X_train_cat = X_cat.loc[train_indices] #Categorical train set
+    X_val_cat = X_cat.loc[val_indices] #Categorical validation set
+    X_test_cat = X_cat.loc[test_indices] #Categorical test set
+
+
+    X_train_cat_final = pd.concat([X_train_cat, X_val_cat], axis=0) #concatenate the categorical data
 
     #concatenate the numerical and categorical splits
+    X_train_final = pd.concat([X_train_num_final, X_train_cat_final], axis=1)
+
+
     X_train_final = pd.concat([X_train_num, X_train_cat], axis=1)
     X_val = pd.concat([X_val_num, X_val_cat], axis=1)
     X_test = pd.concat([X_test_num, X_test_cat], axis=1)
@@ -202,14 +231,21 @@ def import_data(id): #we want to use the task id
     n_labels = len(df["labels"].keys()) #number of labels
 
 
-    #X_train = X_train.values.astype(np.float32)
-    #X_test = X_test.values.astype(np.float32)
+    X_train = X_train.values.astype(np.float32)
+    X_test = X_test.values.astype(np.float32)
 
-    #seed = 11
-    #X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify=y)
+    print("Distribution of y")
+    plot_distribution(y)
 
+    print("Distribution of y_train")
+    y_train_final = y_train[train_indices_return]
+    plot_distribution(y_train_final)
 
-    return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
+    print("Distribution of y_validation")
+    y_val_final = y_train[val_indices_return]
+    plot_distribution(y_val_final)
+
+    return X_train, X_test, y_train, y_test, train_indices_return, val_indices_return, n_instances, n_labels, n_numerical, n_categories
 
        
 
