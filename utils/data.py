@@ -7,9 +7,9 @@ import openml
 import json 
 from config import DATA_BASE_DIR
 from . import log
-from sklearn.preprocessing import LabelEncoder #to create one hot encoding for categorical variables
+from sklearn.preprocessing import LabelEncoder, StandardScaler #to create one hot encoding for categorical variables
 import matplotlib.pyplot as plt
-
+import statistics
 
 logger = log.get_logger()
 
@@ -102,8 +102,11 @@ def mean_and_std(df):
     return mean, std
 
 def normalize(df, mean, std):
-    #Normalize the data
-    df_normalized = (df - mean) / std
+    # Avoid division by zero by replacing zero std with 1 (no scaling for these columns)
+    std_replaced = std.replace(0, 1)
+    
+    # Normalize the data
+    df_normalized = (df - mean) / std_replaced
 
     return df_normalized
 
@@ -157,36 +160,71 @@ def import_data(id): #we want to use the task id
     X_train_cat = X_train[categorical_features] #training categorical
     X_train_num = X_train[numerical_features] #training numerical
 
-    X_train_complement =  X.loc[complement_indices]
+    X_train_complement =  X.loc[complement_indices] #complement of X_train (validation and test set)
 
-    X_train_complement_cat = X_train_complement[categorical_features]
-    X_train_complement_num = X_train_complement[numerical_features]
+    X_train_complement_cat = X_train_complement[categorical_features] #complement of X_train restricted to categorical
+    X_train_complement_num = X_train_complement[numerical_features] #complement of X_train restricted to numerical
 
     ''' 
     Let's impute the missing values in the numerical data with KNN imputer.
     Using the trainning for the imputer in trainning will be used to impute the Validation and Test set
     After that I will normalize the data
     '''
+
     imputer = KNNImputer(n_neighbors=10)
     X_train_num_imputed = imputer.fit_transform(X_train_num) #this returns a numpy array
     X_train_complement_num_imputed = imputer.transform(X_train_complement_num)
+
+    print("-----------------------------------------")
+    print(f"X_train_num_imputed has missing values: {np.isnan(X_train_num_imputed).any()}")
+    print(f"X_train_complement_num_imputed has missing values: {np.isnan(X_train_complement_num_imputed).any()}")
 
     # Convert NumPy array back to Pandas DataFrame
     X_train_num = pd.DataFrame(X_train_num_imputed, columns=X_train_num.columns, index=X_train_num.index) #turnback to pandas
     X_train_complement_num = pd.DataFrame(X_train_complement_num_imputed, columns=X_train_num.columns, index=X_train_complement_num.index) #turnback to pandas
 
+    #remove redundant columns
+    redundant_columns = [col for col in X_train_num.columns if X_train_num[col].nunique() <= 1]
+    X_train_num = X_train_num.drop(columns=redundant_columns)
+    X_train_complement_num = X_train_complement_num.drop(columns=redundant_columns)
+
+    print("-----------------------------------------")
+    print("BAck to pandas dataframes")
+    print(f"X_train_num has missing values: {X_train_num.isnull().values.any()}")
+    print(f"X_train_complement_num has missing values: {X_train_complement_num.isnull().values.any()}")
+    display(X_train_num)
+
+    print("------------------------------------------------------------------------------------ ")
     #normalize the data
-    mean, std = mean_and_std(X_train_num)
-    X_train_num = normalize(X_train_num, mean, std)
-    X_train_complement_num = normalize(X_train_complement_num, mean, std) #standarize with respect of the training set
+
+    # define standard scaler 
+    scaler = StandardScaler() 
+
+    # transform data 
+    X_train_num_numpy = scaler.fit_transform(X_train_num) #scaler returns a numpy array
+    X_train_complement_num_numpy = scaler.transform(X_train_complement_num) #scaler returns a numpy array
+
+    #Transform numpy array to pandas dataframe
+    X_train_num = pd.DataFrame(X_train_num_numpy, columns=X_train_num.columns, index=X_train_num.index) #turnback to pandas
+    X_train_complement_num = pd.DataFrame(X_train_complement_num_numpy, columns=X_train_num.columns, index=X_train_complement_num.index) #turnback to pandas
+
+    print("-----------------------------------------")
+    print(f"X_train_num has missing values: {X_train_num.isnull().values.any()}")
+    print(f"X_train_complement_num has missing values: {X_train_complement_num.isnull().values.any()}")
 
     #Turn back the Numerical splits
     X_val_num = X_train_complement_num.loc[val_indices] #Numerical validation set
     X_test_num = X_train_complement_num.loc[test_indices] #Numerical test set
 
+    print("-----------------------------------------")
+    print(f"X_val_num has missing values: {X_val_num.isnull().values.any()}")
+    print(f"X_test_num has missing values: {X_test_num.isnull().values.any()}")
 
-    X_train_num_final = pd.concat([X_train_num, X_val_num], axis=0) #concatenate the numerical data
+
+    X_train_num_final = pd.concat([X_train_num, X_val_num], axis=0) #concatenate the numerical data (train and validation)
     
+    print("-----------------------------------------")
+    print(f"X_train_num_final has missing values: {X_train_num_final.isnull().values.any()}")
     
     '''
     Now I will work with the categorical datasets
@@ -215,24 +253,32 @@ def import_data(id): #we want to use the task id
 
     X_train_cat_final = pd.concat([X_train_cat, X_val_cat], axis=0) #concatenate the categorical data
 
+    print("-----------------------------------------")
+    print(f"X_train_cat_final has missing values: {X_train_cat_final.isnull().values.any()}")
+
+
     #concatenate the numerical and categorical splits
     X_train_final = pd.concat([X_train_num_final, X_train_cat_final], axis=1)
 
+    print("-----------------------------------------")
+    print(f"X_train_final has missing values: {X_train_final.isnull().values.any()}")
 
-    X_train_final = pd.concat([X_train_num, X_train_cat], axis=1)
-    X_val = pd.concat([X_val_num, X_val_cat], axis=1)
+
+    #X_train_final = pd.concat([X_train_num, X_train_cat], axis=1)
+    #X_val = pd.concat([X_val_num, X_val_cat], axis=1)
     X_test = pd.concat([X_test_num, X_test_cat], axis=1)
-
-    X_train = pd.concat([X_train_final, X_val], axis=0)
+    #X_train = pd.concat([X_train_final, X_val], axis=0)
 
     n_instances = X.shape[0]
-    n_numerical = X_train_num.shape[1]
+    n_numerical = X_train_num_final.shape[1]
     n_categories = [X_cat[col].nunique() for col in X_cat.columns] #list that tells the number of categories for each categorical feature
     n_labels = len(df["labels"].keys()) #number of labels
 
 
-    X_train = X_train.values.astype(np.float32)
+    X_train = X_train_final.values.astype(np.float32)
     X_test = X_test.values.astype(np.float32)
+
+    print(f"X_train has missing values: {np.isnan(X_train).any()}")
 
     print("Distribution of y")
     plot_distribution(y)
@@ -244,15 +290,9 @@ def import_data(id): #we want to use the task id
     print("Distribution of y_validation")
     y_val_final = y_train[val_indices_return]
     plot_distribution(y_val_final)
+    
 
     return X_train, X_test, y_train, y_test, train_indices_return, val_indices_return, n_instances, n_labels, n_numerical, n_categories
 
        
 
-def get_dataset_name(task_id):
-    task = openml.tasks.get_task(task_id)
-    dataset_id = task.dataset_id
-    dataset = openml.datasets.get_dataset(dataset_id)
-    dataset_name = dataset.name
-    
-    return dataset_name

@@ -72,22 +72,22 @@ def model_creation(parameters, project_path):
     columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "epochs", "time"]
     results_table = []
 
+
+    #get the dataset_name
+    dataset_name = data.get_dataset_name(task_id)
+
+    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id)
+
     #parameters for the model
     ff_pw_size = 30  #this value because of the paper 
     attn_dropout = 0.3 #paper
     ff_dropout = 0.1 #paper value
     aggregator = "cls"
     aggregator_parameters = None
-    decoder_hidden_units = [128,64] #paper value
+    decoder_hidden_units = [128,64] #paper value [128,64]
     decoder_activation_fn = nn.ReLU()
     need_weights = False
     numerical_passthrough = False
-
-
-    #get the dataset_name
-    dataset_name = data.get_dataset_name(task_id)
-
-    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id)
 
     if len(np.unique(y_train)) > 2:
         multiclass_val = True
@@ -145,6 +145,24 @@ def model_creation(parameters, project_path):
 
             #MODEL
             model = skorch.NeuralNetClassifier(
+            module=module,
+            criterion=torch.nn.CrossEntropyLoss,
+            optimizer=torch.optim.AdamW,
+            device="cuda" if torch.cuda.is_available() else "cpu",
+            batch_size = batch_size,
+            max_epochs = epochs,
+            train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
+            callbacks=[
+                ("balanced_accuracy", skorch.callbacks.EpochScoring("balanced_accuracy", lower_is_better=False)),
+                ("accuracy", skorch.callbacks.EpochScoring("accuracy", lower_is_better=False)),
+                ("duration", skorch.callbacks.EpochTimer()),
+                EpochScoring(scoring='accuracy', name='train_acc', on_train=True)
+            ],
+            optimizer__lr=0.5,
+            optimizer__weight_decay=1e-4
+            )
+            ''' 
+            model = skorch.NeuralNetClassifier(
                 module=module,
                 criterion=torch.nn.CrossEntropyLoss,
                 optimizer=torch.optim.AdamW,
@@ -161,13 +179,13 @@ def model_creation(parameters, project_path):
                     EarlyStopping(patience=15)
 
                 ],
-                optimizer__lr=1e-3,
+                optimizer__lr=1e-2,
                 optimizer__weight_decay=1e-4
             )
-
+                '''
             # Define Checkpoint and TrainEndCheckpoint callbacks with custom directory
-            cp = Checkpoint()
-            train_end_cp = TrainEndCheckpoint()
+            #cp = Checkpoint()
+            #train_end_cp = TrainEndCheckpoint()
 
 
             #TRAINING
