@@ -144,6 +144,7 @@ def model_creation(parameters, project_path):
             )
 
             #MODEL
+            ''' 
             model = skorch.NeuralNetClassifier(
             module=module,
             criterion=torch.nn.CrossEntropyLoss,
@@ -161,7 +162,8 @@ def model_creation(parameters, project_path):
             optimizer__lr=0.5,
             optimizer__weight_decay=1e-4
             )
-            ''' 
+            '''
+             
             model = skorch.NeuralNetClassifier(
                 module=module,
                 criterion=torch.nn.CrossEntropyLoss,
@@ -176,13 +178,13 @@ def model_creation(parameters, project_path):
                     ("accuracy", skorch.callbacks.EpochScoring("accuracy", lower_is_better=False)),
                     EpochScoring(scoring='accuracy', name='train_acc', on_train=True), # Compute accuracy at the end of each epoch on the training set
                     Checkpoint(dirname= path_of_checkpoint,load_best = True),
-                    EarlyStopping(patience=15)
+                    EarlyStopping(patience=20)
 
                 ],
-                optimizer__lr=1e-2,
+                optimizer__lr=1e-4,
                 optimizer__weight_decay=1e-4
             )
-                '''
+            
             # Define Checkpoint and TrainEndCheckpoint callbacks with custom directory
             #cp = Checkpoint()
             #train_end_cp = TrainEndCheckpoint()
