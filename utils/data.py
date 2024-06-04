@@ -110,17 +110,13 @@ def normalize(df, mean, std):
 
     return df_normalized
 
-def plot_distribution(x):
-    # Create a histogram
-    plt.hist(x, bins=np.arange(min(x), max(x) + 1.5) - 0.5, edgecolor='black', alpha=0.7)
-
+def plot_distribution(x, ax):
+    # Create a histogram on the provided Axes object
+    ax.hist(x, bins=np.arange(min(x), max(x) + 1.5) - 0.5, edgecolor='black', alpha=0.7)
     # Add labels and title
-    plt.xlabel('Values')
-    plt.ylabel('Frequency')
-    plt.title('Values Distribution')
-
-    # Show the plot
-    plt.show()
+    ax.set_xlabel('Values')
+    ax.set_ylabel('Frequency')
+    ax.set_title('Values Distribution')
 
 
 
@@ -140,8 +136,8 @@ def import_data(id): #we want to use the task id
     # Split the data into training and testing sets
     seed = 11
     #the "_prev" is because I will use that set to split again and obtain validaiton and train
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify=y)
-    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, random_state= seed, stratify=y_train) #1/3 of train is equal to 20% of total
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify = y)
+    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, random_state= seed, stratify = y_train) #1/3 of train is equal to 20% of total
 
     X_categorical = X_train[categorical_features]  # Categorical features
     X_numerical = X_train[numerical_features]     # Numerical features
@@ -181,18 +177,28 @@ def import_data(id): #we want to use the task id
     n_labels = len(df["labels"].keys()) #number of labels
 
 
-    ''' 
-    print("Distribution of y")
-    plot_distribution(y)
+    # Assuming y, y_train, train_indices_return, and val_indices_return are defined
+    y_train_final = y_train[train_indices]
+    y_val_final = y_train[val_indices]
 
-    print("Distribution of y_train")
-    y_train_final = y_train[train_indices_return]
-    plot_distribution(y_train_final)
+    # Create a figure with 1 row and 3 columns
+    fig, axs = plt.subplots(1, 3, figsize=(18, 5)) # figsize adjusts the size of the figure
 
-    print("Distribution of y_validation")
-    y_val_final = y_train[val_indices_return]
-    plot_distribution(y_val_final)
-    '''
+    # Plot the distributions
+    plot_distribution(y, axs[0])
+    axs[0].set_title('Distribution of y')
+
+    plot_distribution(y_train_final, axs[1])
+    axs[1].set_title('Distribution of y_train')
+
+    plot_distribution(y_val_final, axs[2])
+    axs[2].set_title('Distribution of y_validation')
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+
+    # Display the plots
+    plt.show()
 
     return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
 

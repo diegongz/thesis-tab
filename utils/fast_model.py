@@ -15,6 +15,7 @@ import openml
 from sklearn import datasets, model_selection
 from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScoring, Checkpoint, TrainEndCheckpoint
 import csv
+import time
 
 def create_parameters(task_id, Layers, Heads, Emedding_dim, batch_size, epochs):
     
@@ -59,42 +60,36 @@ def export_to_csv(results_table, columns_names, folder_path):
         # Writing the data rows
         csv_writer.writerows(results_table)
 
-def model_creation(parameters, project_path):
-    
-    #extract parameters
-    task_id = parameters["task_id"]
-    layers = parameters["Layers"]
-    heads = parameters["Heads"]
-    embed_dim = parameters["Emedding_dim"]
-    batch_size = parameters["batch_size"]
-    epochs = parameters["epochs"]
-    
-    columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "epochs", "time"]
-    results_table = []
 
+'''
+This function trains the model with given parameters
+
+Parameters:
+n_layers_lst: list of integers, the number of layers in the transformer
+n_heads_lst: list of integers, the number of heads in the transformer
+embed_dim: integer, the embedding size of the transformer (Integer so you can control the GPU out of memory error)
+batch_size: integer, the batch size of the training
+epochs: integer, the number of epochs to train the model
+'''
+
+def train_model(task_id, n_layers_lst, n_heads_lst, embed_dim, batch_size, epochs, project_path):
+    
+    #From Id get the data
+    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id)
+
+    columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "max_epochs", "time_trainning"]
+    results_table = []
 
     #get the dataset_name
     dataset_name = data.get_dataset_name(task_id)
 
-    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id)
-
-    #parameters for the model
-    ff_pw_size = 30  #this value because of the paper 
-    attn_dropout = 0.3 #paper
-    ff_dropout = 0.1 #paper value
-    aggregator = "cls"
-    aggregator_parameters = None
-    decoder_hidden_units = [128,64] #paper value [128,64]
-    decoder_activation_fn = nn.ReLU()
-    need_weights = False
-    numerical_passthrough = False
-
+    #Find if I have multiclass in the y's
     if len(np.unique(y_train)) > 2:
         multiclass_val = True
     
     else:
         multiclass_val = False
-    
+  
 
     #create the folder to save the dataset experiments if it doesn't exist
     new_folder(project_path, "data_models")
@@ -109,12 +104,33 @@ def model_creation(parameters, project_path):
     
     experiment_num = 1
     
-    for n_layers in layers:
-        for n_heads in heads:
+    for n_layer in n_layers_lst:
+        for n_head in n_heads_lst:
+            
+            #parameters
+            n_layers = n_layer
+            n_heads = n_head
+            embed_dim = embed_dim #The embedding size is set one by one to avoid the out of memory error
+            batch_size = batch_size # 32, 64, 128, 256, 512, 1024
+            epochs = epochs
+
+            #parameters for the model
+            ff_pw_size = 30  #this value because of the paper 
+            attn_dropout = 0.3 #paper
+            ff_dropout = 0.1 #paper value
+            aggregator = "cls"
+            aggregator_parameters = None
+            decoder_hidden_units = [128,64] #paper value [128,64]
+            decoder_activation_fn = nn.ReLU()
+            need_weights = False
+            numerical_passthrough = False       
+            
+            print("----------------------------------------------------------------------")
+            print("New model:")
+
             #experiment i folder
             new_folder(path_of_dataset, f"experiment_{experiment_num}")
             path_of_experiment = os.path.join(path_of_dataset, f"experiment_{experiment_num}") #In this folder it will be saved the model and images
-
 
             #create the folder for the checkpoints
             new_folder(path_of_experiment, "checkpoints")
@@ -141,9 +157,28 @@ def model_creation(parameters, project_path):
                 decoder_activation_fn=decoder_activation_fn,
                 need_weights=need_weights,
                 numerical_passthrough=numerical_passthrough
-            )
+            ) 
 
             #MODEL
+            model = skorch.NeuralNetClassifier(
+                module=module,
+                criterion=torch.nn.CrossEntropyLoss,
+                optimizer=torch.optim.AdamW,
+                device = "cuda" if torch.cuda.is_available() else "cpu",
+                batch_size = batch_size,
+                max_epochs = epochs,
+                train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
+                callbacks=[
+                    ("balanced_accuracy", skorch.callbacks.EpochScoring("balanced_accuracy", lower_is_better=False)),
+                    ("duration", skorch.callbacks.EpochTimer()),
+                    EpochScoring(scoring='accuracy', name='train_acc', on_train=True), #
+                    Checkpoint(dirname = path_of_checkpoint, load_best = True), 
+                    EarlyStopping(patience=15)
+
+                ],
+                optimizer__lr=1e-4,
+                optimizer__weight_decay=1e-4
+            )
             ''' 
             model = skorch.NeuralNetClassifier(
             module=module,
@@ -162,7 +197,7 @@ def model_creation(parameters, project_path):
             optimizer__lr=0.5,
             optimizer__weight_decay=1e-4
             )
-            '''
+            
              
             model = skorch.NeuralNetClassifier(
                 module=module,
@@ -184,12 +219,13 @@ def model_creation(parameters, project_path):
                 optimizer__lr=1e-4,
                 optimizer__weight_decay=1e-4
             )
+            '''
             
             # Define Checkpoint and TrainEndCheckpoint callbacks with custom directory
-            #cp = Checkpoint()
-            #train_end_cp = TrainEndCheckpoint()
+            cp = Checkpoint()
+            train_end_cp = TrainEndCheckpoint()
 
-
+            start_time = time.time()  # Start the timer to count how long does it takes
             #TRAINING
             model = model.fit(X={
                     "x_numerical": X_train[:, :n_numerical].astype(np.float32),
@@ -197,7 +233,8 @@ def model_creation(parameters, project_path):
                     }, 
                     y=y_train.astype(np.int64)
                     )
-            
+            end_time = time.time()  # Stop the timer
+            training_time = end_time - start_time  # Calculate the elapsed time
             #TESTING
             predictions = model.predict_proba(X={
                             "x_numerical": X_test[:, :n_numerical].astype(np.float32),
@@ -211,9 +248,10 @@ def model_creation(parameters, project_path):
             balanced_accuracy = evaluating.get_default_scores(y_test, predictions, multiclass = multiclass_val)["balanced_accuracy"]
             accuracy = evaluating.get_default_scores(y_test, predictions, multiclass = multiclass_val)["accuracy"]
             log_loss = evaluating.get_default_scores(y_test, predictions, multiclass = multiclass_val)["log_loss"]
+            max_epochs = len(model.history)
 
             #save the results in a list
-            result_row = [dataset_name, experiment_num, n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss]
+            result_row = [dataset_name, experiment_num, n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss, max_epochs, training_time]
             results_table.append(result_row)
 
             #create and save the plots
@@ -230,3 +268,8 @@ def model_creation(parameters, project_path):
 
 
     export_to_csv(results_table, columns_names, path_of_dataset)
+
+
+
+
+
