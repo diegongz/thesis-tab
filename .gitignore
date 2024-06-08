@@ -9,7 +9,7 @@ checkpoint/**/*history.json
 checkpoint/**/*.jl
 
 data_models/**
-
+parameter_selection_models/**
 fs_efficency/**/*.pt
 fs_efficency/**/*history.json
 fs_efficency/**/*.jl
