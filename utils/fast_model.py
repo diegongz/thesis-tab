@@ -177,7 +177,7 @@ def train_model(task_id, n_layers_lst, n_heads_lst, embed_dim, batch_size, epoch
                             ("duration", skorch.callbacks.EpochTimer()),
                             EpochScoring(scoring='accuracy', name='train_acc', on_train=True), #
                             Checkpoint(dirname = path_of_checkpoint, load_best = True), 
-                            EarlyStopping(patience=20)
+                            EarlyStopping(patience=15)
 
                         ],
                         optimizer__lr=1e-4,
@@ -259,7 +259,7 @@ def train_model(task_id, n_layers_lst, n_heads_lst, embed_dim, batch_size, epoch
                     max_epochs = len(model.history)
 
                     #save the results in a list
-                    result_row = [dataset_name, experiment_num, n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss, max_epochs, training_time]
+                    result_row = [dataset_name, experiment_num, n_layers, n_heads, embd, batch_size, balanced_accuracy, accuracy, log_loss, max_epochs, training_time]
                     results_table.append(result_row)
 
                     #create and save the plots
