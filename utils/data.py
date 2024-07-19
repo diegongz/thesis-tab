@@ -120,7 +120,7 @@ def plot_distribution(x, ax):
 
 
 
-def import_data(id): #we want to use the task id
+def import_data(id, sample_percentage): #we want to use the task id
 
     task_id = id
     task = openml.tasks.get_task(task_id)
@@ -129,6 +129,10 @@ def import_data(id): #we want to use the task id
 
     X = df["features"] #features
     y = df["outputs"].codes #outputs
+    
+
+    #size reduction// Used to reduce instances size from 100%-80%-60%-40%-20%
+    X, _, y, _ = model_selection.train_test_split(X, y, train_size = sample_percentage/(100), stratify=y, random_state=11)
     
     categorical_features = df['categorical'].tolist() #name of the categorical features
     numerical_features = df['numerical'].tolist() #name of the numerical features
@@ -181,6 +185,9 @@ def import_data(id): #we want to use the task id
     y_train_final = y_train[train_indices]
     y_val_final = y_train[val_indices]
 
+#-----------------------------------------------------------------------------------------------------
+# Plot the distributions of y, y_train, and y_validation
+    '''
     # Create a figure with 1 row and 3 columns
     fig, axs = plt.subplots(1, 3, figsize=(18, 5)) # figsize adjusts the size of the figure
 
@@ -199,6 +206,7 @@ def import_data(id): #we want to use the task id
 
     # Display the plots
     plt.show()
+    '''
 
     return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
 
