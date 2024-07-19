@@ -1,6 +1,6 @@
 import sys
-sys.path.append('/home/diego/Git/thesis-tabtrans')
-project_path = '/home/diego/Git/thesis-tabtrans'
+sys.path.append('/home/diego_ngz/Git/thesis-tabtrans')
+project_path = '/home/diego_ngz/Git/thesis-tabtrans'
 from utils import data
 import os
 import numpy as np
@@ -25,19 +25,22 @@ import csv
 233118 fashion-mnist 784 features
 233133 falbert 801 features
 233108 cnae-9 857 features
-233121 Devnagari-Script 1024 features
+233121 Devnagari-Script 1025 features
 233131 christine 1637 features 
 233132 dilbert 2001 features
+
 '''
 
-tasks = [233118, 233133, 233108]
+tasks = [233090]
 
-n_layers_lst = [2, 3, 4, 5] #2, 3, 4, 5
-n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
-embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
+n_layers_lst = [2] #2, 3, 4, 5
+n_heads_lst = [4] #4, 8, 16, 32
+embed_dim = [128] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
-epochs = 150
-project_path = '/home/diego/Git/thesis-tabtrans'
+epochs = 2
+sample_size = [40, 20]
+project_path = '/home/diego_ngz/Git/thesis-tabtrans'
 
 for task_id in tasks:
-    fast_model.train_model(task_id, n_layers_lst, n_heads_lst, embed_dim, batch_size, epochs, project_path)
+    fast_model.train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batch_size, epochs, project_path)
+
