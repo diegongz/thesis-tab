@@ -129,10 +129,10 @@ def import_data(id, sample_percentage): #we want to use the task id
 
     X = df["features"] #features
     y = df["outputs"].codes #outputs
-    
 
-    #size reduction// Used to reduce instances size from 100%-80%-60%-40%-20%
-    X, _, y, _ = model_selection.train_test_split(X, y, train_size = sample_percentage/(100), stratify=y, random_state=11)
+    if sample_percentage != 100:
+        #size reduction// Used to reduce instances size from 100%-80%-60%-40%-20%
+        X, _, y, _ = model_selection.train_test_split(X, y, train_size = sample_percentage/(100), stratify=y, random_state=11)
     
     categorical_features = df['categorical'].tolist() #name of the categorical features
     numerical_features = df['numerical'].tolist() #name of the numerical features
