@@ -10,6 +10,7 @@ from . import log
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, StandardScaler #to create one hot encoding for categorical variables
 import matplotlib.pyplot as plt
 import statistics
+from collections import Counter
 
 logger = log.get_logger()
 
@@ -122,10 +123,13 @@ def plot_distribution(x, ax):
 
 def import_data(id, sample_percentage): #we want to use the task id
 
-    task_id = id
-    task = openml.tasks.get_task(task_id)
-    dataset_id = task.dataset_id #suppose we input the task id 
-    df = read_dataset_by_id(dataset_id)
+    if id in [1484,1564]: #two selected datasets with no task id, just id
+        df = read_dataset_by_id(id)
+    else:
+        task_id = id
+        task = openml.tasks.get_task(task_id)
+        dataset_id = task.dataset_id #suppose we input the task id 
+        df = read_dataset_by_id(dataset_id)
 
     X = df["features"] #features
     y = df["outputs"].codes #outputs
@@ -139,6 +143,20 @@ def import_data(id, sample_percentage): #we want to use the task id
 
     # Split the data into training and testing sets
     seed = 11
+
+    # Get unique values and their counts because I want to avoid y having just one instance of a class
+    unique_values, counts = np.unique(y, return_counts=True)
+
+    if 1 in counts: #this means i have only one element from 1 class and i will remove it
+        label_counts = Counter(y)
+
+        labels_to_keep = {label for label, count in label_counts.items() if count > 1}
+
+        # Step 4: Filter out rows in X and y with labels that appear only once
+        mask = np.isin(y, list(labels_to_keep))
+        X = X[mask]
+        y = y[mask] 
+
     #the "_prev" is because I will use that set to split again and obtain validaiton and train
     X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify = y)
     train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, random_state= seed, stratify = y_train) #1/3 of train is equal to 20% of total

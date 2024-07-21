@@ -82,7 +82,11 @@ def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batc
         results_table = []
 
         #get the dataset_name
-        dataset_name = data.get_dataset_name(task_id)
+        if task_id in [1484,1564]: #two selected datasets with no task id, just id
+            dataset = openml.datasets.get_dataset(task_id)
+            dataset_name = dataset.name
+        else:
+            dataset_name = data.get_dataset_name(task_id)
 
         #Find if I have multiclass in the y's
         if len(np.unique(y_train)) > 2:
@@ -291,6 +295,6 @@ def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batc
                             torch.cuda.empty_cache()  # Free up memory if possible               
 
 
-        export_to_csv(results_table, columns_names, path_of_dataset)
+        export_to_csv(results_table, columns_names, path_of_sample)
 
 
