@@ -45,9 +45,10 @@ FINAL DATASETS
 1564 dbworld-subjects
 '''
 
+#tasks = [233090]
 tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484,1564, 12, 9964, 233092, 3485, 9976
 
-sample_size = [20]
+sample_size = [100,80,60,40,20]
 project_path = '/home/diego/Git/thesis-tabtrans'
 
 for task_id in tasks:
