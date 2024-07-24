@@ -6,7 +6,7 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-from utils import training, callback, evaluating, attention, data, plots 
+from utils import training, callback, evaluating, attention, data, plots, xgboost_file
 from sklearn import datasets, model_selection
 import skorch
 import pandas as pd
@@ -297,4 +297,61 @@ def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batc
 
         export_to_csv(results_table, columns_names, path_of_sample)
 
+
+def train_xgboost(task_id, sample_size, project_path):
+    for percentage in sample_size:
+        
+        #From Id get the data
+        #X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id, percentage)
+
+        #columns_names = ["dataset_name", "experiment_num", "balanced_accuracy", "accuracy", "log_loss", "max_epochs", "time_trainning"]
+        #results_table = []
+
+        #save a .txt in the folder to save the validation indices
+        #np.savetxt(os.path.join(path_of_sample, "validation_indices"), val_indices)
+
+        #get the dataset_name
+        if task_id in [1484,1564]: #two selected datasets with no task id, just id
+            dataset = openml.datasets.get_dataset(task_id)
+            dataset_name = dataset.name
+        else:
+            dataset_name = data.get_dataset_name(task_id)
+
+        #create the folder to save the dataset experiments if it doesn't exist
+        new_folder(project_path, "Final_models")
+        path_of_data_models = os.path.join(project_path, "Final_models") #path of the folder data_models
+
+        #create the folder for specific dataset name
+        new_folder(path_of_data_models, f"{dataset_name}") #_{embed_dim}") #
+        path_of_dataset = os.path.join(path_of_data_models, f"{dataset_name}") #path of the folder dataset 
+
+        #create the xgboost folder
+        new_folder(path_of_dataset, "xgboost") 
+        path_of_xgboost = os.path.join(path_of_dataset, "xgboost") #path of the folder dataset
+
+        #create folder of hyperparameter selection
+        new_folder(path_of_xgboost, "hyperparameter_selection") 
+        path_of_hyperparameter_selection = os.path.join(path_of_xgboost, "hyperparameter_selection") #path of the folder dataset
+
+        #create the folder for the sample size
+        new_folder(path_of_hyperparameter_selection, f"{percentage}")
+        path_of_sample = os.path.join(path_of_hyperparameter_selection, f"{percentage}") #path of the folder dataset
+        
+
+        experiment_num = 1
+
+        parameters, balanced_accuracy = xgboost_file.xgboost(task_id, percentage)
+
+        # Add the new key-value pair
+        parameters['balanced_accuracy'] = balanced_accuracy
+
+        final_results = parameters
+
+        
+        columns_names = list(final_results.keys())
+        results_table = []
+        result_row = list(final_results.values())
+        results_table.append(result_row)
+
+        export_to_csv(results_table, columns_names, path_of_sample)
 
