@@ -45,14 +45,14 @@ FINAL DATASETS
 1564 dbworld-subjects
 '''
 
-tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484,1564, 12, 9964, 233092, 3485, 9976
+tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484, 12, 9964, 233092, 3485, 9976
 
-n_layers_lst = [2] #2, 3, 4, 5
-n_heads_lst = [4] #4, 8, 16, 32
-embed_dim = [128] #The embedding size is set one by one to avoid the out of memory error {128, 256}
-batch_size = 128 # 32, 64, 128, 256, 512, 1024
-epochs = 1
-sample_size = [40, 20]
+n_layers_lst = [2, 3, 4, 5] #2, 3, 4, 5
+n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
+embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
+batch_size = 32 # 32, 64, 128, 256, 512, 1024
+epochs = 100
+sample_size = [100, 80, 60, 40, 20]
 project_path = '/home/diego_ngz/Git/thesis-tabtrans'
 
 for task_id in tasks:

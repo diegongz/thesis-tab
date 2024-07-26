@@ -134,6 +134,17 @@ def import_data(id, sample_percentage): #we want to use the task id
     X = df["features"] #features
     y = df["outputs"].codes #outputs
 
+    label_counts = Counter(y) #counts how many instances of each class I have
+
+    labels_to_keep = {label for label, count in label_counts.items() if count > 10} #I will keep only the classes that have more than 25 instances
+
+    mask = np.isin(y, list(labels_to_keep))
+    X = X[mask]
+    y = y[mask]
+    
+    unique_values, counts = np.unique(y, return_counts=True)
+    n_labels = len(unique_values)
+
     #create label encoder for the outputs just to have an order in values
     encoder = LabelEncoder()
 
@@ -149,19 +160,6 @@ def import_data(id, sample_percentage): #we want to use the task id
 
     # Split the data into training and testing sets
     seed = 11
-
-    # Get unique values and their counts because I want to avoid y having just one instance of a class
-    unique_values, counts = np.unique(y, return_counts=True)
-
-    if 1 in counts: #this means i have only one element from 1 class and i will remove it
-        label_counts = Counter(y)
-
-        labels_to_keep = {label for label, count in label_counts.items() if count > 1}
-
-        # Step 4: Filter out rows in X and y with labels that appear only once
-        mask = np.isin(y, list(labels_to_keep))
-        X = X[mask]
-        y = y[mask] 
 
     #the "_prev" is because I will use that set to split again and obtain validaiton and train
     X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify = y)
@@ -202,7 +200,7 @@ def import_data(id, sample_percentage): #we want to use the task id
     n_instances = X_ordered.shape[0]
     n_numerical = X_numerical.shape[1]
     n_categories = [X_categorical[col].nunique() for col in X_categorical.columns] #list that tells the number of categories for each categorical feature
-    n_labels = len(df["labels"].keys()) #number of labels
+    #n_labels = len(df["labels"].keys()) #number of labels// its defined above
 
 
     # Assuming y, y_train, train_indices_return, and val_indices_return are defined

@@ -46,11 +46,20 @@ FINAL DATASETS
 '''
 
 #tasks = [233090]
-tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484,1564, 12, 9964, 233092, 3485, 9976
+#tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484,1564, 12, 9964, 233092, 3485, 9976
 
-sample_size = [100,80,60,40,20]
+
+#I need to finish the experiments 
+tasks = [233092, 3485, 9976] 
+
+#sample_size = [100,80,60,40,20] #100,80,60,40,20
 project_path = '/home/diego/Git/thesis-tabtrans'
 
 for task_id in tasks:
-    fast_model.train_xgboost(task_id, sample_size, project_path)
+    if task_id == 233092:
+        sample_size = [60,40,20] #because i have already done the ones before this
+        fast_model.train_xgboost(task_id, sample_size, project_path)
 
+    else:
+        sample_size = [100,80,60,40,20] #100,80,60,40,20
+        fast_model.train_xgboost(task_id, sample_size, project_path)

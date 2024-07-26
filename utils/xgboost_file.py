@@ -47,16 +47,17 @@ def xgboost(task_id, sample_size):
     'colsample_bytree': [0.6, 0.8, 0.5]
     }
 
-    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id, sample_size)
+    X_train, X_test, y_train, y_test, _, _, _, n_labels, _, _ = data.import_data(task_id, sample_size)
 
-    clf_xgb = xgb.XGBClassifier(objective='multi:softmax', num_class=n_labels, seed = 11, device= 'cuda')
+    clf_xgb = xgb.XGBClassifier(objective='multi:softmax', num_class = n_labels, seed = 11, device= 'cuda')
 
     # Create a GridSearchCV object
     grid_search = GridSearchCV(estimator=clf_xgb,
                             param_grid=param_grid,
                             scoring='balanced_accuracy',  # Adjust scoring metric as needed
                             cv=5,  # 5-fold cross-validation
-                            n_jobs=-1)  # Use all cores
+                            n_jobs=-1, # Use all cores
+                            verbose= 2)  #verbose help to print progress
     
     # Fit the grid search to the training set
     grid_search.fit(X_train, y_train)
