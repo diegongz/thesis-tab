@@ -1,8 +1,17 @@
 import sys
-sys.path.append('/home/diego/Git/thesis-tabtrans')
-project_path = '/home/diego/Git/thesis-tabtrans'
-from utils import data
 import os
+
+#Let's extract the project path 
+
+# Get the directory of the current script
+current_folder = os.path.dirname(os.path.abspath(__file__))
+
+# Get the project directory
+project_path = os.path.dirname(current_folder)
+
+sys.path.append(project_path) #This helps to be able to import the data from the parent directory to other files
+
+from utils import data
 import numpy as np
 import torch
 import torch.nn as nn
@@ -20,6 +29,8 @@ from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScor
 import csv
 import xgboost as xgb
 
+
+
 '''
 We need some values to apply the grid search in the xgboost
 
@@ -32,6 +43,8 @@ We need some values to apply the grid search in the xgboost
 'colsample_bytree': [0.6, 0.8, 0.5]
 
 '''
+
+
 
 
 def xgboost(task_id, sample_size):

@@ -1,8 +1,15 @@
 import sys
-project_path = "/home/diego/Git/thesis-tabtrans"
-sys.path.append(project_path) #import folders from the project_path
-
 import os
+
+# Get the directory of the current script
+current_folder = os.path.dirname(os.path.abspath(__file__))
+
+# Get the project directory
+project_path = os.path.dirname(current_folder)
+
+sys.path.append(project_path) #This helps to be able to import the data from the parent directory to other files
+
+
 import numpy as np
 import torch
 import torch.nn as nn
