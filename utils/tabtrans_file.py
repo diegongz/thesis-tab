@@ -13,7 +13,7 @@ sys.path.append(project_path) #This helps to be able to import the data from the
 import numpy as np
 import torch
 import torch.nn as nn
-from utils import training, callback, evaluating, attention, data, plots, final_model
+from utils import training, callback, evaluating, attention, data, plots, fast_model
 from sklearn import datasets, model_selection
 import skorch
 import pandas as pd
@@ -31,6 +31,14 @@ def final_tab_trans(ds_id, sample_size, project_path):
     X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(ds_id, sample_size)
 
     model_name = "tabtrans"
+
+    #name of the dataset
+    if ds_id in [1484,1564]: #two selected datasets with no task id, just id
+        dataset = openml.datasets.get_dataset(ds_id)
+        dataset_name = dataset.name
+    
+    else:
+        dataset_name = data.get_dataset_name(ds_id)
 
     #Find if I have multiclass in the y's
     if len(np.unique(y_train)) > 2:
@@ -98,14 +106,22 @@ def final_tab_trans(ds_id, sample_size, project_path):
         )
 
     start_time = time.time()  # Start the timer to count how long does it takes
-
-    #model creation
-    model = model.fit(X={
-        "x_numerical": X_train[:, :n_numerical].astype(np.float32),
-        "x_categorical": X_train[:, n_numerical:].astype(np.int32)
-        }, 
-        y=y_train.astype(np.int64)
-    )
+    try: 
+        #model creation
+        model = model.fit(X={
+            "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+            "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+            }, 
+            y=y_train.astype(np.int64)
+        )
+    
+    except RuntimeError as e:
+                        if 'out of memory' in str(e):
+                            print(f"CUDA out of memory")
+                            torch.cuda.empty_cache()  # Free up memory if possible
+                        else:
+                            print("There was an error")
+    
 
     end_time = time.time()  # Stop the timer
     training_time = end_time - start_time  # Calculate the elapsed time
@@ -113,42 +129,58 @@ def final_tab_trans(ds_id, sample_size, project_path):
 
     #predictions
     predictions = model.predict_proba(X={
-    "x_numerical": X_train[:, :n_numerical].astype(np.float32),
-    "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+    "x_numerical": X_test[:, :n_numerical].astype(np.float32),
+    "x_categorical": X_test[:, n_numerical:].astype(np.int32)
     }
     )
 
-    print("Test results in validation:\n")
-    print(evaluating.get_default_scores(y_train.astype(np.int64), predictions, multiclass = multiclass_val))
+    print("Test results:\n")
 
-    #create the path to the final model folder
-    final_model.new_folder(project_path, new_folder_name)
+    metrics = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)
+    print(metrics)
+
+    #define all the keys equals value
+    
+    # Assign dictionary keys as variable names
+    for key, value in metrics.items(): # Loop through the dictionary
+        globals()[key] = value
+
+    #create the table to save results
+    columns_names = ["n_layers", "n_heads", "embed_dim", "batch_size", "max_epochs", "time_trainning"]
+    columns_names.extend(metrics.keys()) #add the keys of the metrics
+
+    results_table = []
+
+    #results row
+    result_row = [n_layers, n_heads, embed_dim, batch_size, epochs, training_time]
+    result_row.extend(metrics.values()) #add the values of the metrics
+
+    results_table.append(result_row)
+
+
 
     model_name_path = os.path.join(project_path, "Final_models", dataset_name, model_name)
     
-    #create the folder final_model
+    #create the folder final_tabtrans
     fast_model.new_folder(model_name_path, "final_tabtrans")
 
     #path to the final_tabtrans folder
     final_tabtrans_folder = os.path.join(model_name_path, "final_tabtrans")
 
     #create the folder for the sample size
-    fast_model.new_folder(final_tabtrans_folder, sample_size)
+    fast_model.new_folder(final_tabtrans_folder, f"{sample_size}")
 
     #path to sample size folder
-    sample_size_folder = os.path.join(final_tabtrans_folder, sample_size) #here i will save the results
+    sample_size_folder = os.path.join(final_tabtrans_folder, f"{sample_size}") #here i will save the results
 
     #create the table to save results
-    columns_names = ["n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "max_epochs", "time_trainning"]
-    results_table = []
+    #columns_names = ["n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "max_epochs", "time_trainning"]
+    #results_table = []
 
-    balanced_accuracy = evaluating.get_default_scores(y_train.astype(np.int64), predictions, multiclass = multiclass_val)["balanced_accuracy"]
-    accuracy = evaluating.get_default_scores(y_train.astype(np.int64), predictions, multiclass = multiclass_val)["accuracy"]
-    log_loss = evaluating.get_default_scores(y_train.astype(np.int64), predictions, multiclass = multiclass_val)["log_loss"]
+    #balanced_accuracy = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)["balanced_accuracy"]
+    #accuracy = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)["accuracy"]
+    #log_loss = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)["log_loss"]
 
-    #results row
-    result_row = [n_layers, n_heads, embed_dim, batch_size, balanced_accuracy, accuracy, log_loss, epochs, training_time]
-    results_table.append(result_row)
 
     fast_model.export_to_csv(results_table, columns_names, sample_size_folder)
 

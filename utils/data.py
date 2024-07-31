@@ -139,31 +139,36 @@ def import_data(id, sample_percentage): #we want to use the task id
     labels_to_keep = {label for label, count in label_counts.items() if count > 10} #I will keep only the classes that have more than 25 instances
 
     mask = np.isin(y, list(labels_to_keep))
-    X = X[mask]
-    y = y[mask]
     
-    unique_values, counts = np.unique(y, return_counts=True)
+    #Filtering the classes with less than 10 instances
+    X_masked = X[mask]
+    y_masked = y[mask]
+    
+    unique_values, counts = np.unique(y_masked, return_counts=True)
     n_labels = len(unique_values)
 
     #create label encoder for the outputs just to have an order in values
     encoder = LabelEncoder()
 
     #encode the labels (converts strings to integers from 0 to n-1)
-    y = encoder.fit_transform(y)
+    y_masked = encoder.fit_transform(y_masked)
 
+    #First I want to get the 80-20-20 split (Train-Test-Validation)
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_masked, y_masked, test_size=0.20, random_state= 11, stratify = y_masked)
+    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=.33, random_state= 11, stratify = y_train) #.33 of train is equal to 20% of total
+
+    #The X_test and y_test will be the same for all sample size, what will change is the X_train and y_train
+    #If there exists a reduction it will be done in the indices of train indices and val indices
     if sample_percentage != 100:
-        #size reduction// Used to reduce instances size from 100%-80%-60%-40%-20%
-        X, _, y, _ = model_selection.train_test_split(X, y, train_size = sample_percentage/100, stratify=y, random_state=11)
-    
+        #size reduction// Used to reduce instances size from 100%-80%-60%-40%-20% on the training set
+        train_indices, _ = model_selection.train_test_split(train_indices, train_size = sample_percentage/100, random_state= 11, stratify = y_train[train_indices]) #.33 of train is equal to 20% of total
+
+
     categorical_features = df['categorical'].tolist() #name of the categorical features
     numerical_features = df['numerical'].tolist() #name of the numerical features
 
     # Split the data into training and testing sets
     seed = 11
-
-    #the "_prev" is because I will use that set to split again and obtain validaiton and train
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state= seed, stratify = y)
-    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=1/3, random_state= seed, stratify = y_train) #1/3 of train is equal to 20% of total
 
     X_categorical = X_train[categorical_features]  # Categorical features
     X_numerical = X_train[numerical_features]     # Numerical features
@@ -247,15 +252,97 @@ def import_hyperparameters(ds_id, sample_size, model_name, project_path):
     else:
         dataset_name = get_dataset_name(ds_id)
 
-    results_file = os.path.join(project_path, "Final_models", dataset_name, model_name,"hyperparameter_selection",sample_size, "results.csv")
+    results_file = os.path.join(project_path, "Final_models", f"{dataset_name}", model_name,"hyperparameter_selection",f"{sample_size}", "results.csv")
 
     results = pd.read_csv(results_file)
     
     # Find the row where the "name" column has the maximum value
-    max_row = results.loc[df['balanced_accuracy'].idxmax()]
+    max_row = results.loc[results['balanced_accuracy'].idxmax()]
 
     hyperparameters = max_row.to_dict()
     
     return hyperparameters
-       
+
+
+def compare_models(ds_id, project_path):
+    
+    if ds_id in [1484,1564]: #two selected datasets with no task id, just id
+        dataset = openml.datasets.get_dataset(ds_id)
+        dataset_name = dataset.name
+    
+    else:
+        dataset_name = get_dataset_name(ds_id)
+
+    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = import_data(ds_id, 100)
+
+    #compute the feature to instance ratio
+    total_instances = X_train.shape[0]+X_test.shape[0]
+    total_features = X_train.shape[1]
+
+    sample_sizes = [20,40,60,80,100]
+
+    f2i = [] #here I will store the feature to instance ratios
+
+    for x in sample_sizes:
+        ratio = total_features/(total_instances*(x/100))
+        f2i.append(ratio)
+
+    ds_path_final_tabtrans = os.path.join(project_path, "Final_models", f"{dataset_name}", "tabtrans","final_tabtrans")
+    ds_path_xgboost = os.path.join(project_path, "Final_models", f"{dataset_name}", "xgboost","hyperparameter_selection")
+
+    balanced_acc_tabtrans = []
+    balanced_acc_xgboost = []
+
+    for size in sample_sizes:
+        result_sample_tabtrans = os.path.join(ds_path_final_tabtrans, f"{size}", "results.csv")
+        result_sample_xgboost = os.path.join(ds_path_xgboost, f"{size}", "results.csv")
+
+        tabtrans_result_df = pd.read_csv(result_sample_tabtrans)
+        xgboost_result_df = pd.read_csv(result_sample_xgboost)
+
+        # Extract the value from the "balanced_accuracy" column
+        balanced_accuracy_tabtrans = tabtrans_result_df["balanced_accuracy"].iloc[0]
+        balanced_accuracy_xgboost = xgboost_result_df["balanced_accuracy"].iloc[0]
+
+        balanced_acc_tabtrans.append(balanced_accuracy_tabtrans)
+        balanced_acc_xgboost.append(balanced_accuracy_xgboost)
+
+    #Lets plot the results
+    fig, ax = plt.subplots()
+    ax.plot(f2i, balanced_acc_tabtrans, color='blue', label='TabTrans')
+    ax.plot(f2i, balanced_acc_xgboost, color='red', label='XGBoost')
+
+    ax.set_title(f'Model comparison in {dataset_name} dataset')
+    ax.set_xlabel('f2i Ratio')
+    ax.set_ylabel('Balanced Accuracy')
+    ax.legend(loc='upper right')
+
+    #path to save the comparison
+
+    path_to_save_plot = os.path.join(project_path, "Final_models", f"{dataset_name}", f"model_comparison_{dataset_name}.png")
+
+    fig.savefig(path_to_save_plot)
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+    
+
+    
+
+      
 

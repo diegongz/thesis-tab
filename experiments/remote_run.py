@@ -1,20 +1,18 @@
 import sys
-sys.path.append('/home/diego_ngz/Git/thesis-tabtrans')
-project_path = '/home/diego_ngz/Git/thesis-tabtrans'
-from utils import data
 import os
-import numpy as np
-import torch
-import torch.nn as nn
-from utils import training, callback, evaluating, attention, data, plots, fast_model
-from sklearn import datasets, model_selection
-import skorch
-import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
-import openml
-from sklearn import datasets, model_selection
-from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScoring, Checkpoint, TrainEndCheckpoint
-import csv
+
+# Get the directory of the current script
+current_folder = os.path.dirname(os.path.abspath(__file__)) #path of the folder that contains this file
+
+# Get the project directory
+folder_path = os.path.dirname(current_folder) #parent folder of current_folder
+project_path = folder_path #In this case works
+
+#project_path = os.path.dirname(folder_path)
+
+sys.path.append(project_path) #This helps to be able to import the data from the parent directory to other files
+
+from utils import fast_model
 
 #task_id = 233090 #anneal
 #task_id = 233093 #mfeat
@@ -45,15 +43,14 @@ FINAL DATASETS
 1564 dbworld-subjects
 '''
 
-tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484, 12, 9964, 233092, 3485, 9976
+tasks = [1484, 12, 9964, 233092, 3485] #1484, 12, 9964, 233092, 3485, 9976
 
-n_layers_lst = [2, 3, 4, 5] #2, 3, 4, 5
-n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
-embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
+n_layers_lst = [2] #2, 3, 4, 5
+n_heads_lst = [4] #4, 8, 16, 32
+embed_dim = [128] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
-epochs = 100
-sample_size = [100, 80, 60, 40, 20]
-project_path = '/home/diego_ngz/Git/thesis-tabtrans'
+epochs = 10
+sample_size = [20]
 
 for task_id in tasks:
     fast_model.train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batch_size, epochs, project_path)

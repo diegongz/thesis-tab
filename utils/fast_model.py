@@ -83,10 +83,8 @@ epochs: integer, the number of epochs to train the model
 def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batch_size, epochs, project_path):
     for percentage in sample_size:    
         #From Id get the data
-        X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id, percentage)
 
-        columns_names = ["dataset_name", "experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "balanced_accuracy", "accuracy", "log_loss", "max_epochs", "time_trainning"]
-        results_table = []
+        X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(task_id, percentage)
 
         #get the dataset_name
         if task_id in [1484,1564]: #two selected datasets with no task id, just id
@@ -101,11 +99,13 @@ def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batc
         
         else:
             multiclass_val = False
+
+        print(np.unique(y_train))
     
 
         #create the folder to save the dataset experiments if it doesn't exist
-        new_folder(project_path, "Final_models")
-        path_of_data_models = os.path.join(project_path, "Final_models") #path of the folder data_models
+        new_folder(project_path, "Final_models_2")
+        path_of_data_models = os.path.join(project_path, "Final_models_2") #path of the folder data_models
 
         #create the folder for specific dataset name
         new_folder(path_of_data_models, f"{dataset_name}") #_{embed_dim}") #
@@ -127,6 +127,8 @@ def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batc
         np.savetxt(os.path.join(path_of_sample, "validation_indices"), val_indices)
         
         experiment_num = 1
+
+        results_table = []
         
         for embd in embed_dim:
             for n_layer in n_layers_lst:
@@ -274,18 +276,40 @@ def train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batc
                                         "x_categorical": X_train[:, n_numerical:].astype(np.int32)
                                         }
                                         )
+                                
                         
                         print("Test results in validation:\n")
-                        print(evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val))
+                        metrics = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)
+                        print(metrics)
+
+                        # Assign dictionary keys as variable names
+                        for key, value in metrics.items(): # Loop through the dictionary
+                            globals()[key] = value
                         
-                        balanced_accuracy = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)["balanced_accuracy"]
-                        accuracy = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)["accuracy"]
-                        log_loss = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)["log_loss"]
+                        #create the table to save results
+                        columns_names = ["experiment_num", "n_layers", "n_heads", "embed_dim", "batch_size", "max_epochs", "time_trainning"]
+                        columns_names.extend(metrics.keys()) #add the keys of the metrics
+
+                        print(columns_names)
+
                         max_epochs = len(model.history)
+                        result_row = [experiment_num, n_layers, n_heads, embd, batch_size, max_epochs, training_time]
+                        result_row.extend(metrics.values()) #add the values of the metrics
+
+                        results_table.append(result_row)
+
+
+
+
+                        #print(evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val))
+                        
+                        #balanced_accuracy = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)["balanced_accuracy"]
+                        #accuracy = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)["accuracy"]
+                        #log_loss = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)["log_loss"]
 
                         #save the results in a list
-                        result_row = [dataset_name, experiment_num, n_layers, n_heads, embd, batch_size, balanced_accuracy, accuracy, log_loss, max_epochs, training_time]
-                        results_table.append(result_row)
+                        #result_row = [dataset_name, experiment_num, n_layers, n_heads, embd, batch_size, balanced_accuracy, accuracy, log_loss, max_epochs, training_time]
+                        #results_table.append(result_row)
 
                         #create and save the plots
                         fig = plots.model_plots(model, f"Experiment {experiment_num}")
@@ -325,8 +349,8 @@ def train_xgboost(task_id, sample_size, project_path):
             dataset_name = data.get_dataset_name(task_id)
 
         #create the folder to save the dataset experiments if it doesn't exist
-        new_folder(project_path, "Final_models")
-        path_of_data_models = os.path.join(project_path, "Final_models") #path of the folder data_models
+        new_folder(project_path, "Final_models_2")
+        path_of_data_models = os.path.join(project_path, "Final_models_2") #path of the folder data_models
 
         #create the folder for specific dataset name
         new_folder(path_of_data_models, f"{dataset_name}") #_{embed_dim}") #
