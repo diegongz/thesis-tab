@@ -17,15 +17,12 @@ import torch
 import torch.nn as nn
 from utils import training, callback, evaluating, attention, data, plots, fast_model
 from sklearn import datasets, model_selection
-from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV
 
-import skorch
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
-import openml
 from sklearn import datasets, model_selection
-from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScoring, Checkpoint, TrainEndCheckpoint
 import csv
 import xgboost as xgb
 
@@ -81,9 +78,30 @@ def xgboost(task_id, sample_size):
 
     # Evaluate the best model on the test set
     y_pred = best_model.predict(X_test)
-    balanced_accuracy = balanced_accuracy_score(y_test, y_pred)
 
-    return best_params, balanced_accuracy
+    #Now I will get the metrics
+    accuracy = accuracy_score(y_test, y_pred)
+    balanced_accuracy = balanced_accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    precision = precision_score(y_test, y_pred, average='weighted')
+    recall = recall_score(y_test, y_pred, average='weighted')
+    #roc_auc = roc_auc_score(y_test, y_pred, average='weighted')
+
+    #Now I will save the results in a dictionary
+    metrics = {
+        'accuracy': accuracy,
+        'balanced_accuracy': balanced_accuracy,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall,
+        #'roc_auc': roc_auc
+    }
+
+    # Add these metrics to best_params
+    best_params.update(metrics)
+
+
+    return best_params
     
 
 

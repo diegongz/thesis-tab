@@ -43,14 +43,14 @@ FINAL DATASETS
 1564 dbworld-subjects
 '''
 
-tasks = [1484, 12, 9964, 233092, 3485] #1484, 12, 9964, 233092, 3485, 9976
+tasks = [1484, 12, 9964, 3485, 233092] #1484, 12, 9964, 233092, 3485, 9976
 
-n_layers_lst = [2] #2, 3, 4, 5
-n_heads_lst = [4] #4, 8, 16, 32
-embed_dim = [128] #The embedding size is set one by one to avoid the out of memory error {128, 256}
+n_layers_lst = [2, 3, 4, 5] #2, 3, 4, 5
+n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
+embed_dim = [128,256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
-epochs = 10
-sample_size = [20]
+epochs = 100
+sample_size = [100,80,60,40,20]
 
 for task_id in tasks:
     fast_model.train_model(task_id, sample_size, n_layers_lst, n_heads_lst, embed_dim, batch_size, epochs, project_path)
