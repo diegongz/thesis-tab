@@ -25,7 +25,13 @@ import csv
 import time
 
 
-def final_tab_trans(ds_id, sample_size, project_path):
+def final_tab_trans(ds_id, sample_size, project_path, name_folder_models):
+
+    '''
+    name_folder_models: Refers to the name of the folder where all datasets are saved eg:(Final_models_2, Final_models... etc)
+    
+    '''
+
 
     #Import data
     X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(ds_id, sample_size)
@@ -48,12 +54,12 @@ def final_tab_trans(ds_id, sample_size, project_path):
         multiclass_val = False
 
     #Load hyperparameters
-    hyperparameters = data.import_hyperparameters(ds_id, sample_size, model_name, project_path)
+    hyperparameters = data.import_hyperparameters(ds_id, sample_size, model_name, project_path, name_folder_models)
 
     #Extract the hyperparameters
-    n_heads = hyperparameters["n_heads"]
-    embed_dim = hyperparameters["embed_dim"]
-    n_layers = hyperparameters["n_layers"]
+    n_heads = int(hyperparameters["n_heads"])
+    embed_dim = int(hyperparameters["embed_dim"])
+    n_layers = int(hyperparameters["n_layers"])
     ff_pw_size = 30  #this value because of the paper
     attn_dropout = 0.3 #paper
     ff_dropout = 0.1 #paper value
@@ -64,9 +70,8 @@ def final_tab_trans(ds_id, sample_size, project_path):
     need_weights = False
     numerical_passthrough = False
 
-    batch_size = hyperparameters["batch_size"]
-    epochs = hyperparameters["max_epochs"]
-
+    batch_size = int(hyperparameters["batch_size"])
+    epochs = int(hyperparameters["max_epochs"])
     """
     Building PyTorch module.
 
@@ -106,6 +111,15 @@ def final_tab_trans(ds_id, sample_size, project_path):
         )
 
     start_time = time.time()  # Start the timer to count how long does it takes
+    
+    #model creation
+    model = model.fit(X={
+        "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+        "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+        }, 
+        y=y_train.astype(np.int64)
+    )
+    '''
     try: 
         #model creation
         model = model.fit(X={
@@ -123,6 +137,7 @@ def final_tab_trans(ds_id, sample_size, project_path):
                             print("There was an error")
     
 
+    '''
     end_time = time.time()  # Stop the timer
     training_time = end_time - start_time  # Calculate the elapsed time
 
@@ -159,7 +174,7 @@ def final_tab_trans(ds_id, sample_size, project_path):
 
 
 
-    model_name_path = os.path.join(project_path, "Final_models", dataset_name, model_name)
+    model_name_path = os.path.join(project_path, f"{name_folder_models}", dataset_name, model_name)
     
     #create the folder final_tabtrans
     fast_model.new_folder(model_name_path, "final_tabtrans")

@@ -244,7 +244,7 @@ def get_dataset_name(task_id):
     dataset = openml.datasets.get_dataset(dataset_id)
     return dataset.name
 
-def import_hyperparameters(ds_id, sample_size, model_name, project_path):
+def import_hyperparameters(ds_id, sample_size, model_name, project_path, name_folder_models):
     if ds_id in [1484,1564]: #two selected datasets with no task id, just id
         dataset = openml.datasets.get_dataset(ds_id)
         dataset_name = dataset.name
@@ -252,7 +252,7 @@ def import_hyperparameters(ds_id, sample_size, model_name, project_path):
     else:
         dataset_name = get_dataset_name(ds_id)
 
-    results_file = os.path.join(project_path, "Final_models", f"{dataset_name}", model_name,"hyperparameter_selection",f"{sample_size}", "results.csv")
+    results_file = os.path.join(project_path, f"{name_folder_models}", f"{dataset_name}", model_name,"hyperparameter_selection",f"{sample_size}", "results.csv")
 
     results = pd.read_csv(results_file)
     

@@ -368,21 +368,51 @@ def train_xgboost(task_id, sample_size, project_path):
         new_folder(path_of_hyperparameter_selection, f"{percentage}")
         path_of_sample = os.path.join(path_of_hyperparameter_selection, f"{percentage}") #path of the folder dataset
         
+        best_params, metrics, cv_results = xgboost_file.run_xgboost(task_id, percentage)
 
-        experiment_num = 1
+        #Let's export this 3 dicts to csv
 
-        parameters, balanced_accuracy = xgboost_file.xgboost(task_id, percentage)
+        # Open the file in write mode and export the dictionary as CSV
+        path_parm = os.path.join(path_of_sample, "parameters.csv")
 
-        # Add the new key-value pair
-        parameters['balanced_accuracy'] = balanced_accuracy
-
-        final_results = parameters
-
+        with open(path_parm, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Write header (keys)
+            writer.writerow(best_params.keys())
+            
+            # Write values
+            writer.writerow(best_params.values())  
         
-        columns_names = list(final_results.keys())
-        results_table = []
-        result_row = list(final_results.values())
-        results_table.append(result_row)
+        
+        path_metrics = os.path.join(path_of_sample, "metrics.csv")
 
-        export_to_csv(results_table, columns_names, path_of_sample)
+        with open(path_metrics, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Write header (keys)
+            writer.writerow(metrics.keys())
+            
+            # Write values
+            writer.writerow(metrics.values())
+
+
+        path_cv = os.path.join(path_of_sample, "cross_validation.csv")
+
+        with open(path_cv, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Write header (keys)
+            writer.writerow(cv_results.keys())
+            
+            # Write values
+            writer.writerow(cv_results.values())
+        
+
+
+
+
+
+
+
 

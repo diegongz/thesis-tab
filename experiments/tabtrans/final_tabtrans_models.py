@@ -28,11 +28,11 @@ FINAL DATASETS
 1564 dbworld-subjects
 '''
 
-tasks = [1484, 12, 9964, 233092, 3485, 9976] #1484, 12, 9964, 233092, 3485, 9976
+tasks = [1484] #1484, 12, 9964, 233092, 3485, 9976
 sample_size = [20,40,60,80,100] # 20,40,60,80,100
 
 
 for task in tasks:
     for sample in sample_size:
-        tabtrans_file.final_tab_trans(task, sample, project_path)
+        tabtrans_file.final_tab_trans(task, sample, project_path, "Final_models_2")
 
