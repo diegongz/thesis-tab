@@ -9,6 +9,8 @@ current_folder = os.path.dirname(os.path.abspath(__file__))
 # Get the project directory
 project_path = os.path.dirname(current_folder)
 
+print(project_path)
+
 sys.path.append(project_path) #This helps to be able to import the data from the parent directory to other files
 
 from utils import data
@@ -25,6 +27,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn import datasets, model_selection
 import csv
 import xgboost as xgb
+
 
 
 
@@ -60,14 +63,13 @@ def run_xgboost(task_id, sample_size):
         'reg_lambda': [1, 1.5, 2]
     }
 
-    X_train, X_test, y_train, y_test, _, _, _, n_labels, _, _ = data.import_data(task_id, sample_size)
+    X_train, X_test, y_train, y_test, train_indices, _, _, n_labels, _, _ = data.import_data(task_id, sample_size)
 
-    if torch.cuda.is_available():
-        device = 'cuda'
-    else:
-        device = 'cpu'
-    
-    clf_xgb = xgb.XGBClassifier(objective='multi:softmax', num_class = n_labels, seed = 11, device = device)
+    X_train = X_train[train_indices]
+    y_train = y_train[train_indices]
+
+
+    clf_xgb = xgb.XGBClassifier(objective='multi:softmax', num_class = n_labels, seed = 11, device= 'cuda')
 
     # Create a GridSearchCV object
     grid_search = GridSearchCV(estimator=clf_xgb,
@@ -94,7 +96,7 @@ def run_xgboost(task_id, sample_size):
     conf_matrix = confusion_matrix(y_test, y_pred) #[[TN FP] [FN TP]]
     accuracy = accuracy_score(y_test, y_pred)
     balanced_accuracy = balanced_accuracy_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred, average='weighted')
+    #f1 = f1_score(y_test, y_pred, average='weighted')
     precision = precision_score(y_test, y_pred, average='weighted')
     recall = recall_score(y_test, y_pred, average='weighted')
 
@@ -102,10 +104,10 @@ def run_xgboost(task_id, sample_size):
     metrics = {
         'accuracy': accuracy,
         'balanced_accuracy': balanced_accuracy,
-        'TP rate (recall)': recall,
-        'precision': precision,
         'f1': f1,
-        'confusion_matrix': conf_matrix
+        'precision': precision,
+        'recall': recall,
+        #'roc_auc': roc_auc
     }
 
     

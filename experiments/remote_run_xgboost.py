@@ -56,5 +56,6 @@ tasks = [1484] #1484, 12, 9964, 233092, 3485, 9976
 
 sample_size = [100,80,60,40,20] #100,80,60,40,20
 
+
 for task_id in tasks:
     fast_model.train_xgboost(task_id, sample_size, project_path)

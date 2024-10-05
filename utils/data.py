@@ -120,8 +120,26 @@ def plot_distribution(x, ax):
     ax.set_title('Values Distribution')
 
 
+#This function helps to get faster the portion of the trainning set that will be used for validation to use in the import data function
+def fraction_from_trainning(trainning_per, validation_per):
+    dec_trainning = trainning_per/100
+    dec_validation = validation_per/100
 
-def import_data(id, sample_percentage): #we want to use the task id
+    portion_from_trainning = dec_validation/dec_trainning
+
+    return portion_from_trainning
+
+#-------------------------------------------------------------------------------------------
+'''
+This function will import the data from the openml dataset, it will preprocess 
+the data and return the train and test 
+Considering the whole dataset using a 80-10-10 split
+The seed used is 11
+'''
+def import_data(id): #we want to use the task id
+
+    #set seed
+    seed = 11
 
     if id in [1484,1564]: #two selected datasets with no task id, just id
         df = read_dataset_by_id(id)
@@ -153,16 +171,20 @@ def import_data(id, sample_percentage): #we want to use the task id
     #encode the labels (converts strings to integers from 0 to n-1)
     y_masked = encoder.fit_transform(y_masked)
 
-    #First I want to get the 80-20-20 split (Train-Test-Validation)
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_masked, y_masked, test_size=0.20, random_state= 11, stratify = y_masked)
-    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size=.33, random_state= 11, stratify = y_train) #.33 of train is equal to 20% of total
+    #First I want to get the 80-10-10 split (Train-Test-Validation)
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_masked, y_masked, test_size=0.10, random_state= seed, stratify = y_masked)
+    
+    val_test_size = fraction_from_trainning(80,10)
+
+    train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size = val_test_size, random_state= seed, stratify = y_train) #.33 of train is equal to 20% of total
 
     #The X_test and y_test will be the same for all sample size, what will change is the X_train and y_train
     #If there exists a reduction it will be done in the indices of train indices and val indices
+    '''' 
     if sample_percentage != 100:
         #size reduction// Used to reduce instances size from 100%-80%-60%-40%-20% on the training set
         train_indices, _ = model_selection.train_test_split(train_indices, train_size = sample_percentage/100, random_state= 11, stratify = y_train[train_indices]) #.33 of train is equal to 20% of total
-
+    '''
 
     categorical_features = df['categorical'].tolist() #name of the categorical features
     numerical_features = df['numerical'].tolist() #name of the numerical features
@@ -207,42 +229,41 @@ def import_data(id, sample_percentage): #we want to use the task id
     n_categories = [X_categorical[col].nunique() for col in X_categorical.columns] #list that tells the number of categories for each categorical feature
     #n_labels = len(df["labels"].keys()) #number of labels// its defined above
 
-
     # Assuming y, y_train, train_indices_return, and val_indices_return are defined
     y_train_final = y_train[train_indices]
     y_val_final = y_train[val_indices]
 
-#-----------------------------------------------------------------------------------------------------
-# Plot the distributions of y, y_train, and y_validation
-    '''
-    # Create a figure with 1 row and 3 columns
-    fig, axs = plt.subplots(1, 3, figsize=(18, 5)) # figsize adjusts the size of the figure
-
-    # Plot the distributions
-    plot_distribution(y, axs[0])
-    axs[0].set_title('Distribution of y')
-
-    plot_distribution(y_train_final, axs[1])
-    axs[1].set_title('Distribution of y_train')
-
-    plot_distribution(y_val_final, axs[2])
-    axs[2].set_title('Distribution of y_validation')
-
-    # Adjust layout to prevent overlap
-    plt.tight_layout()
-
-    # Display the plots
-    plt.show()
-    '''
-
     return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
 
+#-------------------------------------------------------------------------------------------
+''' 
+Takes random sample from X_train of size 80-60-40-20% of the original size
+and then the validation indices will be taken from the complement instances of the training indices
+''' 
+def reduce_size(y_train, train_indices, val_indices, sample_size, seed):
+    
+    indices = np.sort(np.append(train_indices,val_indices))
 
-def get_dataset_name(task_id):
-    task = openml.tasks.get_task(task_id)
-    dataset_id = task.dataset_id
-    dataset = openml.datasets.get_dataset(dataset_id)
-    return dataset.name
+    train_indices, complement = model_selection.train_test_split(indices, train_size = sample_size/100, random_state= seed, stratify = y_train) 
+
+    validation_size = train_indices.shape[0]*(.20)
+
+    val_indices, _ = model_selection.train_test_split(complement, test_size = validation_size, random_state= seed, stratify = y_train[complement]) 
+
+    return train_indices, val_indices
+
+#-------------------------------------------------------------------------------------------
+def get_dataset_name(ds_id):
+    if ds_id in [1484,1564]: #two selected datasets with no task id, just id
+        dataset = openml.datasets.get_dataset(ds_id)
+        dataset_name = dataset.name
+    else:
+        task = openml.tasks.get_task(ds_id)
+        dataset_id = task.dataset_id
+        dataset = openml.datasets.get_dataset(dataset_id)
+        dataset_name = dataset.name
+
+    return dataset_name
 
 def import_hyperparameters(ds_id, sample_size, model_name, project_path, name_folder_models):
     if ds_id in [1484,1564]: #two selected datasets with no task id, just id
