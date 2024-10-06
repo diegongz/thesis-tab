@@ -24,6 +24,137 @@ from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScor
 import csv
 import time
 
+'''
+X_train: Training data from 90-10 X
+X_test: 10% from the first split X
+y_train: Training data from 90-10 y
+y_test: 10% from the first split y
+train_indices: The indices that will be used for training X_train[train_indices] is the original train
+val_indices: The indices that will be used for validaiton X_train[val_indices] is the validation sets
+n_labels: Number of classes
+n_numerical: Number of numerical features
+n_categories: List that tells mes how many categories every categorical feature has 
+dataset_name: The name of the dataset
+n_layers: Number of layers that the transformer will set
+n_heads: number of heads
+embedding_size: embedding size used for the embeddings
+batch_size: size of the batches
+epochs: max number of epochs
+hyperparameter_search: By default is False, which mean will train a normal model (without doing validation), if True then will use the validation set to train the best model
+'''
+def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False):
+
+    #Find if I have multiclass in the y's
+    if len(np.unique(y_train)) > 2:
+        multiclass_val = True
+    
+    else:
+        multiclass_val = False
+
+    print(f"Embedding Size: {embedding_size}")
+    print(f"Number of Layers: {n_layers}")
+    print(f"Number of Heads: {n_heads}")
+
+    #parameters for the model
+    ff_pw_size = 30  #this value because of the paper 
+    attn_dropout = 0.3 #paper
+    ff_dropout = 0.1 #paper value
+    aggregator = "cls"
+    aggregator_parameters = None
+    decoder_hidden_units = [128,64] #paper value [128,64]
+    decoder_activation_fn = nn.ReLU()
+    need_weights = False
+    numerical_passthrough = False
+
+    #module
+    module = training.build_module(
+        n_categories, # List of number of categories
+        n_numerical, # Number of numerical features
+        n_heads, # Number of heads per layer
+        ff_pw_size, # Size of the MLP inside each transformer encoder layer
+        n_layers, # Number of transformer encoder layers    
+        n_labels, # Number of output neurons
+        embedding_size,
+        attn_dropout, 
+        ff_dropout, 
+        aggregator, # The aggregator for output vectors before decoder
+        rnn_aggregator_parameters=aggregator_parameters,
+        decoder_hidden_units=decoder_hidden_units,
+        decoder_activation_fn=decoder_activation_fn,
+        need_weights=need_weights,
+        numerical_passthrough=numerical_passthrough
+    ) 
+
+    if hyperparameter_search == True:
+        #MODEL
+        model = skorch.NeuralNetClassifier(
+            module=module,
+            criterion=torch.nn.CrossEntropyLoss,
+            optimizer=torch.optim.AdamW,
+            device = "cuda" if torch.cuda.is_available() else "cpu",
+            batch_size = batch_size,
+            max_epochs = epochs,
+            train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
+            callbacks=[
+                ("balanced_accuracy", skorch.callbacks.EpochScoring("balanced_accuracy", lower_is_better=False)),
+                ("duration", skorch.callbacks.EpochTimer()),
+                EpochScoring(scoring='accuracy', name='train_acc', on_train=True),
+                #Checkpoint(dirname = path_of_checkpoint, load_best = True), 
+                EarlyStopping(patience=15)
+
+            ],
+            optimizer__lr=1e-4,
+            optimizer__weight_decay=1e-4
+        )
+        
+    else:
+        model = skorch.NeuralNetClassifier(
+            module = module,
+            criterion=torch.nn.CrossEntropyLoss,
+            optimizer=torch.optim.AdamW,
+            device= "cuda", #cuda" if torch.cuda.is_available() else
+            batch_size = batch_size,
+            train_split = None,
+            max_epochs = epochs,
+            optimizer__lr=1e-4,
+            optimizer__weight_decay=1e-4
+        )
+
+    start_time = time.time()  # Start the timer to count how long does it takes
+    
+    #TRAINING
+    model = model.fit(X={
+            "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+            "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+            }, 
+            y=y_train.astype(np.int64)
+            )
+    end_time = time.time()  # Stop the timer
+    training_time = end_time - start_time  # Calculate the elapsed time    
+    
+    if hyperparameter_search == True:       
+        predictions = model.predict_proba(X={
+                                            "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+                                            "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+                                            }
+                                            )
+        metrics = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)
+    
+    else:
+        #predictions
+        predictions = model.predict_proba(X={
+        "x_numerical": X_test[:, :n_numerical].astype(np.float32),
+        "x_categorical": X_test[:, n_numerical:].astype(np.int32)
+        }
+        )
+
+        metrics = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)
+
+
+    return model, metrics, training_time
+
+
+
 
 def final_tab_trans(ds_id, sample_size, project_path, name_folder_models):
 

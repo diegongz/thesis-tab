@@ -246,9 +246,9 @@ def reduce_size(y_train, train_indices, val_indices, sample_size, seed):
 
     train_indices, complement = model_selection.train_test_split(indices, train_size = sample_size/100, random_state= seed, stratify = y_train) 
 
-    validation_size = train_indices.shape[0]*(.20)
+    validation_size = int(train_indices.shape[0]*(.20))
 
-    val_indices, _ = model_selection.train_test_split(complement, test_size = validation_size, random_state= seed, stratify = y_train[complement]) 
+    val_indices, _ = model_selection.train_test_split(complement, train_size = validation_size, random_state= seed, stratify = y_train[complement]) 
 
     return train_indices, val_indices
 
