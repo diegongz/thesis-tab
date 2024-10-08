@@ -91,7 +91,7 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
             module=module,
             criterion=torch.nn.CrossEntropyLoss,
             optimizer=torch.optim.AdamW,
-            device = "cuda" if torch.cuda.is_available() else "cpu",
+            device = "cuda", #if torch.cuda.is_available() else "cpu",
             batch_size = batch_size,
             max_epochs = epochs,
             train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
@@ -150,8 +150,10 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
 
         metrics = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)
 
+        #add the training_time as a value in metrics dictionary
+        metrics["time_trainning"] = training_time
 
-    return model, metrics, training_time
+    return model, metrics
 
 
 

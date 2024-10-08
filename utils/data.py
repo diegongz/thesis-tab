@@ -129,6 +129,20 @@ def fraction_from_trainning(trainning_per, validation_per):
 
     return portion_from_trainning
 
+def configuration_dict(df_id, n_layers, n_heads, embedding_size, batch_size, epochs, sample_size):
+    
+    parameters = {
+    "df_id" : df_id,
+    "n_layers": n_layers,
+    "n_heads": n_heads,
+    "embedding_size": embedding_size,
+    "batch_size": batch_size,
+    "epochs": epochs,
+    "sample_size": sample_size
+    }
+
+    return parameters
+
 #-------------------------------------------------------------------------------------------
 '''
 This function will import the data from the openml dataset, it will preprocess 
@@ -244,11 +258,11 @@ def reduce_size(y_train, train_indices, val_indices, sample_size, seed):
     
     indices = np.sort(np.append(train_indices,val_indices))
 
-    train_indices, complement = model_selection.train_test_split(indices, train_size = sample_size/100, random_state= seed, stratify = y_train) 
+    general_n_percent, _ = model_selection.train_test_split(indices, train_size = sample_size/100, random_state= seed, stratify = y_train)
 
     validation_size = int(train_indices.shape[0]*(.20))
 
-    val_indices, _ = model_selection.train_test_split(complement, train_size = validation_size, random_state= seed, stratify = y_train[complement]) 
+    train_indices, val_indices = model_selection.train_test_split(general_n_percent, test_size= validation_size, random_state= seed, stratify = y_train[general_n_percent]) 
 
     return train_indices, val_indices
 
@@ -264,6 +278,7 @@ def get_dataset_name(ds_id):
         dataset_name = dataset.name
 
     return dataset_name
+
 
 def import_hyperparameters(ds_id, sample_size, model_name, project_path, name_folder_models):
     if ds_id in [1484,1564]: #two selected datasets with no task id, just id

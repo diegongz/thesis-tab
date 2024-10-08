@@ -24,19 +24,6 @@ from skorch.callbacks import Checkpoint, EarlyStopping, LoadInitState, EpochScor
 import csv
 import time
 
-def create_parameters(task_id, Layers, Heads, Emedding_dim, batch_size, epochs):
-    
-    parameters = {
-    "task_id" : task_id,
-    "Layers": Layers,
-    "Heads": Heads,
-    "Emedding_dim": Emedding_dim,
-    "batch_size": batch_size,
-    "epochs": epochs,
-    }
-
-    return parameters
-
 '''
 Input a project_path and the name of the new folder you want to create.
 
