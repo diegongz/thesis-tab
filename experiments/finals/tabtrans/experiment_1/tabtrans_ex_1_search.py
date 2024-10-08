@@ -38,12 +38,12 @@ FINAL DATASETS
 
 #define the search space
 
-n_layers_lst = [2,3,4,5] #2, 3, 4, 5
+n_layers_lst = [2, 3, 4, 5] #2, 3, 4, 5
 n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128,256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [100,20]
+sample_size = [100,80,60,40,20]
 
 
 df_id = 1484
@@ -75,11 +75,13 @@ for sample in sample_size:
         for n_layers in n_layers_lst:
             for n_heads in n_heads_lst:
                 for embedding_size in embed_dim:
-                    
-                    #create the dict of the actual configuration
-                    configuration_dict = data.configuration_dict(df_id, n_layers, n_heads, embedding_size, batch_size, epochs, sample)
-                    
+                                        
                     model, metrics = tabtrans_file.general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = True)
+
+                    #create the dict of the actual configuration
+                    configuration_dict = data.configuration_dict(n_layers, n_heads, embedding_size, batch_size)
+                    configuration_dict["max_epochs"] = len(model.history)
+             
 
                     row_result = {**configuration_dict ,**metrics} #this is a row of the csv file
 
@@ -145,11 +147,12 @@ for sample in sample_size:
             for n_layers in n_layers_lst:
                 for n_heads in n_heads_lst:
                     for embedding_size in embed_dim:
+                                                
+                        model, metrics = tabtrans_file.general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = True)
                         
                         #create the dict of the actual configuration
-                        configuration_dict = data.configuration_dict(df_id, n_layers, n_heads, embedding_size, batch_size, epochs, sample)
-                        
-                        model, metrics = tabtrans_file.general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = True)
+                        configuration_dict = data.configuration_dict(n_layers, n_heads, embedding_size, batch_size)
+                        configuration_dict["max_epochs"] = len(model.history)
 
                         row_result = {**configuration_dict ,**metrics} #this is a row of the csv file
 

@@ -157,19 +157,14 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
 
 
 
+#-----------------------------FINAL TABTRANS--------------------------------------------
+'''
+This function returns the final tabtrans model metrics using the best hyperparameters configuration
 
-def final_tab_trans(ds_id, sample_size, project_path, name_folder_models):
+hyperparameters: Dictionary with the hyperparameters configuration
+'''
 
-    '''
-    name_folder_models: Refers to the name of the folder where all datasets are saved eg:(Final_models_2, Final_models... etc)
-    
-    '''
-
-
-    #Import data
-    X_train, X_test, y_train, y_test, train_indices, val_indices, _, n_labels, n_numerical, n_categories = data.import_data(ds_id, sample_size)
-
-    model_name = "tabtrans"
+def final_tab_trans(ds_id, X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, hyperparameters):
 
     #name of the dataset
     if ds_id in [1484,1564]: #two selected datasets with no task id, just id

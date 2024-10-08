@@ -129,16 +129,13 @@ def fraction_from_trainning(trainning_per, validation_per):
 
     return portion_from_trainning
 
-def configuration_dict(df_id, n_layers, n_heads, embedding_size, batch_size, epochs, sample_size):
+def configuration_dict(n_layers, n_heads, embedding_size, batch_size):
     
     parameters = {
-    "df_id" : df_id,
     "n_layers": n_layers,
     "n_heads": n_heads,
     "embedding_size": embedding_size,
     "batch_size": batch_size,
-    "epochs": epochs,
-    "sample_size": sample_size
     }
 
     return parameters
