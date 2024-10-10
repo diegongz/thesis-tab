@@ -23,6 +23,7 @@ import numpy as np
 '''
 FINAL DATASETS
 1484 lsvt
+31 credit 
 12 mfeat-factors 217 pass
 20 mfeat-pixel 241 #have probelms this dataset check this one
 9964 semeion 257 pass
@@ -46,7 +47,7 @@ epochs = 100
 sample_size = [100,80,60,40,20]
 
 
-df_id = 1484
+df_id = 31
 
 name_df = data.get_dataset_name(df_id)
 

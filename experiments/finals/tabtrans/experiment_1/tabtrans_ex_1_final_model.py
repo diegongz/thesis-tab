@@ -19,8 +19,20 @@ from utils import data, tabtrans_file, plots
 import pandas as pd
 import numpy as np
 
+'''
+FINAL DATASETS
+1484 lsvt
+31 credit 
+12 mfeat-factors 217 pass
+20 mfeat-pixel 241 #have probelms this dataset check this one
+9964 semeion 257 pass
+233092 arrhythmia 280
+3485 scene 300
+9976 madelon 501
+3481 isolet 618 (TO MUCH INSTANCES) 
+'''
 
-df_id = 1484
+df_id = 31
 
 name_df = data.get_dataset_name(df_id)
 
@@ -34,7 +46,7 @@ path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans'
 #create the directory if it does not exist
 os.makedirs(path_to_final_tabtrans, exist_ok=True)
 
-sample_sizes = [80] # 100, 80, 60, 40, 20
+sample_sizes = [100, 80, 60, 40, 20] # 100, 80, 60, 40, 20
 
 for sample in sample_sizes:
     path_of_size = f'{path_to_hyperparameters}/{sample}'
@@ -132,17 +144,3 @@ for sample in sample_sizes:
             number_of_seed += 1
 
         print(f"All Seeds have been trained for sample size:{sample}")
-
-
-
-
-
-
-            
-
-
-
-
-
-
-        

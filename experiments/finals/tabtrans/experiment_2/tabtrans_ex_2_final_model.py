@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 
 
-df_id = 1484
+df_id = 31
 
 name_df = data.get_dataset_name(df_id)
 
@@ -29,12 +29,12 @@ path_of_datset = f'{project_path}/Final_models_3/{name_df}' #The path can be
 path_to_hyperparameters = f'{path_of_datset}/tabtrans/hyperparameter_selection'
 
 #define the path to final_tabtrans
-path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans'
+path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans_2'
 
 #create the directory if it does not exist
 os.makedirs(path_to_final_tabtrans, exist_ok=True)
 
-sample_sizes = [80] # 100, 80, 60, 40, 20
+sample_sizes = [100, 80, 60, 40, 20] # 100, 80, 60, 40, 20
 
 for sample in sample_sizes:
     path_of_size = f'{path_to_hyperparameters}/{sample}'
