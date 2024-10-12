@@ -32,7 +32,7 @@ FINAL DATASETS
 3481 isolet 618 (TO MUCH INSTANCES) 
 '''
 
-df_id = 31
+df_id = 1484
 
 name_df = data.get_dataset_name(df_id)
 
@@ -46,7 +46,7 @@ path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans'
 #create the directory if it does not exist
 os.makedirs(path_to_final_tabtrans, exist_ok=True)
 
-sample_sizes = [100, 80, 60, 40, 20] # 100, 80, 60, 40, 20
+sample_sizes = [100] # 100, 80, 60, 40, 20
 
 for sample in sample_sizes:
     path_of_size = f'{path_to_hyperparameters}/{sample}'
@@ -59,6 +59,7 @@ for sample in sample_sizes:
         path_of_results = f'{path_of_size}/results.csv'
 
         hyperparameters = data.import_hyperparameters(path_of_results)
+
 
         n_layers = int(hyperparameters["n_layers"])
         n_heads = int(hyperparameters["n_heads"])

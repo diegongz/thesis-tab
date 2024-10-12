@@ -73,6 +73,14 @@ for sample in sample_size:
 
         experiment_num = 1
         #train the model
+        '''
+        n_layers_lst = [2, 3, 4, 5] #2, 3, 4, 5
+        n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
+        embed_dim = [128,256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
+        batch_size = 32 # 32, 64, 128, 256, 512, 1024
+        epochs = 100
+        sample_size = [100,80,60,40,20]                                             
+        '''
         for n_layers in n_layers_lst:
             for n_heads in n_heads_lst:
                 for embedding_size in embed_dim:
@@ -94,7 +102,7 @@ for sample in sample_size:
                     #Save the plot of the model
                     path_model_plot = os.path.join(size_path, 'plots')
 
-                    configuration_path = os.path.join(path_model_plot, f'ex_{experiment_num}{n_layers}_{n_heads}_{embedding_size}')
+                    configuration_path = os.path.join(path_model_plot, f'ex_{experiment_num}_{n_layers}_{n_heads}_{embedding_size}')
                     
                     #create the folders if they dont exist
                     os.makedirs(configuration_path, exist_ok=True)
