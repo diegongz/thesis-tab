@@ -185,7 +185,7 @@ def import_data(id): #we want to use the task id
     #First I want to get the 80-10-10 split (Train-Test-Validation)
     X_train, X_test, y_train, y_test = model_selection.train_test_split(X_masked, y_masked, test_size=0.10, random_state= seed, stratify = y_masked)
     
-    val_test_size = fraction_from_trainning(80,10)
+    val_test_size = int(X_train.shape[0]*(.20))
 
     train_indices, val_indices = model_selection.train_test_split(np.arange(X_train.shape[0]), test_size = val_test_size, random_state= seed, stratify = y_train) #.33 of train is equal to 20% of total
 

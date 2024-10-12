@@ -100,7 +100,7 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
                 ("duration", skorch.callbacks.EpochTimer()),
                 EpochScoring(scoring='accuracy', name='train_acc', on_train=True),
                 #Checkpoint(dirname = path_of_checkpoint, load_best = True), 
-                EarlyStopping(patience=15)
+                EarlyStopping(patience=10)
 
             ],
             optimizer__lr=1e-4,

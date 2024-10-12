@@ -94,5 +94,6 @@ def model_plots(model, title):
     # Adjust layout to prevent overlap
     plt.tight_layout()
 
+
     # Return the combined figure
     return fig

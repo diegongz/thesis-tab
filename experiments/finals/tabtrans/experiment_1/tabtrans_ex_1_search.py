@@ -44,10 +44,10 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128,256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [100,80,60,40,20]
+sample_size = [100]
 
 
-df_id = 31
+df_id = 1484
 
 name_df = data.get_dataset_name(df_id)
 
@@ -61,7 +61,6 @@ for sample in sample_size:
         
         #import data for the task
         X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories = data.import_data(df_id)
-
         
         #In this list I will append the dicts that represent the rows of the csv file
         table_of_results = []
