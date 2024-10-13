@@ -183,7 +183,7 @@ def import_data(id): #we want to use the task id
     y_masked = encoder.fit_transform(y_masked)
 
     #First I want to get the 80-10-10 split (Train-Test-Validation)
-    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_masked, y_masked, test_size=0.10, random_state= seed, stratify = y_masked)
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X_masked, y_masked, test_size=0.20, random_state= seed, stratify = y_masked)
     
     val_test_size = int(X_train.shape[0]*(.20))
 
@@ -261,7 +261,7 @@ def reduce_size(y_train, train_indices, val_indices, sample_size, seed):
 
     train_indices, val_indices = model_selection.train_test_split(general_n_percent, test_size= validation_size, random_state= seed, stratify = y_train[general_n_percent]) 
 
-    return train_indices, val_indices
+    return train_indices, val_indices, general_n_percent
 
 #-------------------------------------------------------------------------------------------
 def get_dataset_name(ds_id):
@@ -275,6 +275,78 @@ def get_dataset_name(ds_id):
         dataset_name = dataset.name
 
     return dataset_name
+
+'''
+This function will import all the results from all the folds and reduce all the info in a single row
+
+Note:
+The rows of the df should be:
+['n_layers', 'n_heads', 'embedding_size', 'batch_size', 'max_epochs', 'balanced_accuracy', 'accuracy', 'log_loss', 'roc_auc', 'f1', 'precision', 'recall']
+'''
+def results_cv(df):
+    # Columns that will remain the same (assuming these values are the same for all rows)
+    constant_columns = ['n_layers', 'n_heads', 'embedding_size', 'batch_size']
+
+    # Columns for which we need to calculate mean and std
+    stats_columns = [
+        'max_epochs', 'balanced_accuracy', 'accuracy', 'log_loss',
+        'roc_auc', 'f1', 'precision', 'recall'
+    ]
+
+    # Get the mean and std for the statistical columns
+    mean_values = df[stats_columns].mean()
+    std_values = df[stats_columns].std()
+
+    # Prepare new columns names for mean and std
+    new_columns = []
+    new_values = []
+
+    for col in stats_columns:
+        new_columns.append(f'{col}_mean')
+        new_columns.append(f'{col}_std')
+        new_values.append(mean_values[col])
+        new_values.append(std_values[col])
+
+    # Combine the constant values and the new calculated values
+    final_columns = constant_columns + new_columns
+    final_values = list(df[constant_columns].iloc[0]) + new_values
+
+    # Create the new DataFrame with one row
+    resuls_df = pd.DataFrame([final_values], columns=final_columns)
+
+    return resuls_df
+
+def hyperparameter_selection_file_cv(size_path):
+    # List to hold the data from all results.csv files
+    all_data = []
+
+    # Iterate over each subfolder in size_path
+    for subfolder in os.listdir(size_path):
+        subfolder_path = os.path.join(size_path, subfolder)
+        
+        # Check if it is a directory
+        if os.path.isdir(subfolder_path):
+            # Path to results.csv within the subfolder
+            results_file = os.path.join(subfolder_path, 'results.csv')
+            
+            # Check if results.csv exists
+            if os.path.exists(results_file):
+                # Read the CSV file
+                df = pd.read_csv(results_file)
+                
+                # Append the data to the list
+                all_data.append(df)
+            else:
+                print(f'results.csv not found in {subfolder_path}')
+
+    # Combine all the DataFrames into one
+    if all_data:
+        combined_df = pd.concat(all_data, ignore_index=True)
+    else:
+        print("No data found to combine.")
+
+    
+    return combined_df 
 
 
 def import_hyperparameters(path_of_csv):
