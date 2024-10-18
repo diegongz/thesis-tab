@@ -5,14 +5,13 @@ import pandas as pd
 from sklearn.impute import KNNImputer
 import openml
 import json 
-from config import DATA_BASE_DIR
-from . import log
+#from config import DATA_BASE_DIR
+#from . import log
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, StandardScaler #to create one hot encoding for categorical variables
 import matplotlib.pyplot as plt
-import statistics
 from collections import Counter
 
-logger = log.get_logger()
+#logger = log.get_logger()
 
 def read_dataset_by_id(id):
 
@@ -63,7 +62,7 @@ def read_dataset_by_id(id):
         "n_numerical": len(numerical)
     }
 
-def read_meta_csv(dirname, file_prefix):
+#def read_meta_csv(dirname, file_prefix):
     dataset_file = os.path.join(dirname, f"{file_prefix}.csv")
     meta_file = os.path.join(dirname, f"{file_prefix}.meta.json")
     data = pd.read_csv(dataset_file)
@@ -349,12 +348,15 @@ def hyperparameter_selection_file_cv(size_path):
     return combined_df 
 
 
-def import_hyperparameters(path_of_csv):
+def import_hyperparameters(path_of_csv, cv = False):
 
     results = pd.read_csv(path_of_csv)
-    
-    # Find the row where the "name" column has the maximum value
-    max_row = results.loc[results['balanced_accuracy'].idxmax()]
+
+    if cv:
+        max_row = results.loc[results['balanced_accuracy_mean'].idxmax()]
+    else:
+        # Find the row where the "balanced_accuracy" column has the maximum value
+        max_row = results.loc[results['balanced_accuracy'].idxmax()]
 
     hyperparameters = max_row.to_dict()
     
