@@ -44,7 +44,63 @@ We need some values to apply the grid search in the xgboost
 
 '''
 
+def hyperparameters_xgboost(params, X_train, y_train, train_indices, val_indices, n_labels, device_name):
 
+    model = xgb.XGBClassifier(
+        objective='multi:softmax',
+        num_class = n_labels,
+        seed = 11,
+        device= device_name,
+        early_stopping_rounds=10,
+        **params
+    )
+    
+    if device_name == "cuda":
+        import cupy as cp
+        # Fit the model
+        model.fit(cp.array(X_train)[train_indices], cp.array(y_train)[train_indices], eval_set=[(X_train[val_indices], y_train[val_indices])], verbose=True)
+
+    else:
+        model.fit(X_train[train_indices], y_train[train_indices], eval_set=[(X_train[val_indices], y_train[val_indices])], verbose=True)
+
+    metrics = {}
+
+    # Predict and evaluate accuracy
+    y_pred_in_val = model.predict(X_train[val_indices])
+
+    balanced_accuracy = balanced_accuracy_score(y_train[val_indices], y_pred_in_val)
+    accuracy = accuracy_score(y_train[val_indices], y_pred_in_val)
+    precision = precision_score(y_train[val_indices], y_pred_in_val, average='weighted')
+    recall = recall_score(y_train[val_indices], y_pred_in_val, average='weighted')
+    final_n_estimators = model.best_iteration + 1
+    conf_matrix = confusion_matrix(y_train[val_indices], y_pred_in_val) #[[TN FP] [FN TP]]
+
+    metrics = {
+        'balanced_accuracy': balanced_accuracy,
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'n_estimators': final_n_estimators,
+        'confusion_matrix': conf_matrix
+    }
+    
+    return metrics
+
+def general_row_result(config_num, fold_num, metrics, params):
+    config_result = []
+    
+    config_result.append(config_num)
+    config_result.append(fold_num)
+
+    _, metrics_values = zip(*metrics.items())
+    metrics_values = list(metrics_values)
+    config_result.extend(metrics_values)
+
+    _, params_values = zip(*params.items())
+    params_values = list(params_values)
+    config_result.extend(params_values)
+
+    return config_result
 
 
 def run_xgboost(task_id, sample_size):
