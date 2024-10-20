@@ -48,7 +48,7 @@ def xgboost_bayesian(params, X_train, y_train, n_labels):
     bayes_search = BayesSearchCV(
         estimator = model,
         search_spaces = params,
-        n_iter = 50,   # Number of parameter settings that are sampled
+        n_iter = 30,   # Number of parameter settings that are sampled
         cv = 5,        # Cross-validation splitting strategy
         n_jobs = -1,   # Use all available cores
         random_state = 11,

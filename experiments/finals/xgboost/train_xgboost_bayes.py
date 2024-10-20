@@ -76,6 +76,7 @@ search_space = {
     'gamma': Real(0, 1)
 }
 
+start_time = time.time()
 for sample in sample_size:
     if sample == 100:
         #create the folder of the sample size
@@ -199,8 +200,12 @@ for sample in sample_size:
         # Optionally, you can reset the index to avoid having index numbers in the final result
         summary_df.reset_index(drop=True, inplace=True)
 
-        summary_df.to_csv(f'{path_of_trials}/results.csv', index=False)
+        path_final_results = f'{path_of_datset}/xgboost/final_xgboost/{sample}'
+
+        summary_df.to_csv(f'{path_final_results}/results.csv', index=False)
 
 
 
 
+end_time = time.time()
+print(f'Total time: {(end_time - start_time)/60} minutes')
