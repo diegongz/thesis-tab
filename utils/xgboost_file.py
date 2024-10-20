@@ -14,19 +14,10 @@ print(project_path)
 sys.path.append(project_path) #This helps to be able to import the data from the parent directory to other files
 
 from utils import data
-import numpy as np
-import torch
-import torch.nn as nn
-from utils import training, callback, evaluating, attention, data, plots, fast_model
-from sklearn import datasets, model_selection
 from sklearn.metrics import confusion_matrix, balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV
-
-import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
-from sklearn import datasets, model_selection
-import csv
 import xgboost as xgb
+from skopt import BayesSearchCV
 
 
 
@@ -43,6 +34,63 @@ We need some values to apply the grid search in the xgboost
 'colsample_bytree': [0.6, 0.8, 0.5]
 
 '''
+
+def xgboost_bayesian(params, X_train, y_train, n_labels):
+    
+    model = xgb.XGBClassifier(
+        objective='multi:softmax',
+        num_class = n_labels,
+        seed = 11,
+        n_jobs=-1
+    )
+    
+    # Initialize BayesSearchCV
+    bayes_search = BayesSearchCV(
+        estimator = model,
+        search_spaces = params,
+        n_iter = 60,   # Number of parameter settings that are sampled
+        cv = 5,        # Cross-validation splitting strategy
+        n_jobs = -1,   # Use all available cores
+        random_state = 11,
+        verbose= 2,  # Controls the verbosity: 2 given that we want to monitor how is running
+        scoring='balanced_accuracy'
+    )
+
+    # Perform the search
+    bayes_search.fit(X_train, y_train)
+
+    # Get the best model
+    best_model = bayes_search.best_estimator_ #Here the best model is saved
+    best_params = bayes_search.best_params_ #here we have the best parameters
+    cv_results = bayes_search.cv_results_ #here we have the results of the cross validation
+    best_score = bayes_search.best_score_
+
+    return best_model, best_params, cv_results, best_score
+
+def evaluate_xgboost_bayesian(model, X_train, y_train, X_test, y_test):
+    
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    #Now I will get the metrics
+    # Generate confusion matrix
+    balanced_accuracy = balanced_accuracy_score(y_test, y_pred)
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    precision = precision_score(y_test, y_pred, average='weighted')
+    recall = recall_score(y_test, y_pred, average='weighted')
+
+    #Now I will save the results in a dictionary
+    metrics = {
+        'balanced_accuracy': balanced_accuracy,
+        'accuracy': accuracy,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall,
+    }
+
+    return metrics
+
 
 def hyperparameters_xgboost(params, X_train, y_train, train_indices, val_indices, n_labels, device_name):
 
@@ -73,7 +121,7 @@ def hyperparameters_xgboost(params, X_train, y_train, train_indices, val_indices
     precision = precision_score(y_train[val_indices], y_pred_in_val, average='weighted')
     recall = recall_score(y_train[val_indices], y_pred_in_val, average='weighted')
     final_n_estimators = model.best_iteration + 1
-    conf_matrix = confusion_matrix(y_train[val_indices], y_pred_in_val) #[[TN FP] [FN TP]]
+
 
     metrics = {
         'balanced_accuracy': balanced_accuracy,
@@ -81,7 +129,6 @@ def hyperparameters_xgboost(params, X_train, y_train, train_indices, val_indices
         'precision': precision,
         'recall': recall,
         'n_estimators': final_n_estimators,
-        'confusion_matrix': conf_matrix
     }
     
     return metrics

@@ -62,9 +62,13 @@ os.makedirs(path_of_datset, exist_ok=True)
 os.makedirs(path_of_xgboost, exist_ok=True)
 
 param_grid = {
-    'learning_rate': [0.01, 0.05],
-    'max_depth': [3],
-    'n_estimators': [300]
+    'learning_rate': [0.01, 0.05, 0.1],
+    'max_depth': [3, 5, 7],
+    'subsample': [0.5, 0.8, 1],
+    'colsample_bytree': [0.5, 0.8, 1],
+    'reg_lambda': [1, 3, 5],
+    'n_estimators': [100,300,500],
+    'gamma': [0, 0.1, 1]
     }
 
 start_time = time.time()
