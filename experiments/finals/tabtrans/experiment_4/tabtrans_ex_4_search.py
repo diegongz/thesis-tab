@@ -57,7 +57,7 @@ sample_size = [100,80,60,40,20]
 seed = 11
 
 
-df_id = 31
+df_id = 12
 
 name_df = data.get_dataset_name(df_id)
 
