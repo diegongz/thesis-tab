@@ -46,7 +46,7 @@ path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans_cv'
 #create the directory if it does not exist
 os.makedirs(path_to_final_tabtrans, exist_ok=True)
 
-sample_sizes = [100, 80, 60, 40, 20] # 100, 80, 60, 40, 20
+sample_sizes = [100, 80, 60, 40, 20, 10] # 100, 80, 60, 40, 20, 10
 
 for sample in sample_sizes:
     path_of_size = f'{path_to_hyperparameters}/{sample}'
