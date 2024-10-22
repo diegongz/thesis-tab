@@ -32,7 +32,7 @@ FINAL DATASETS
 3481 isolet 618 (TO MUCH INSTANCES) 
 '''
 
-df_id = 31
+df_id = 1484
 
 name_df = data.get_dataset_name(df_id)
 
@@ -114,6 +114,7 @@ for sample in sample_sizes:
             X_train = X_train[general_n_percent]
             y_train = y_train[general_n_percent]
 
+            #import the results of the sample size/seed_i
             path_of_results = f'{path_of_trials}/seed_{number_of_seed}/results.csv'
 
             hyperparameters = data.import_hyperparameters(path_of_results, cv = True)
@@ -167,13 +168,13 @@ for sample in sample_sizes:
         std_values = combined_results.iloc[:, :6].std()
 
         # Create a dictionary with the new column names
-        mean_columns = {col: f"{col}_mean" for col in combined_results.columns[:8]}
-        std_columns = {col: f"{col}_std" for col in combined_results.columns[:8]}
+        mean_columns = {col: f"{col}_mean" for col in combined_results.columns[:6]}
+        std_columns = {col: f"{col}_std" for col in combined_results.columns[:6]}
 
         # Create a new DataFrame with the results, renaming columns accordingly
         summary_df = pd.DataFrame({
-            **{mean_columns[col]: [mean_values[col]] for col in combined_results.columns[:8]},
-            **{std_columns[col]: [std_values[col]] for col in combined_results.columns[:8]}
+            **{mean_columns[col]: [mean_values[col]] for col in combined_results.columns[:6]},
+            **{std_columns[col]: [std_values[col]] for col in combined_results.columns[:6]}
         })
 
         # Optionally, you can reset the index to avoid having index numbers in the final result

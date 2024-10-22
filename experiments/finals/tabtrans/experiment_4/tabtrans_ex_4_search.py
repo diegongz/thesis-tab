@@ -53,11 +53,11 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [10]
+sample_size = [100,80,60,40,20,10]
 seed = 11
 
 
-df_id = 31
+df_id = 233092
 
 name_df = data.get_dataset_name(df_id)
 
@@ -196,10 +196,12 @@ for sample in sample_size:
 
         number_of_seed = 1
 
+        #Here the random seed process starts
         for random_seed in random_seeds:
 
             X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories = data.import_data(df_id)
 
+            #Folder path of the Seed Sample/trials/seed_i
             seed_folder = f'{tabtrans_dataset_path}/{sample}/trials/seed_{number_of_seed}'
             
             # Create the folder and its subfolders (True means that the folder will be created if it does not exist)
@@ -220,7 +222,8 @@ for sample in sample_size:
             for n_layers in n_layers_lst:
                 for n_heads in n_heads_lst:
                     for embedding_size in embed_dim:
-
+                        
+                        #Path one specific configuration in the seed_i
                         configuration_path = f"{seed_folder}/config_{experiment_num}_l{n_layers}_h{n_heads}_e{embedding_size}"
 
                         #create the folder of the condiguration
@@ -229,13 +232,15 @@ for sample in sample_size:
                         #create the dict of the actual configuration
                         configuration_dict = data.configuration_dict(n_layers, n_heads, embedding_size, batch_size)
 
-                        configuration_fold_comparison = [] #the ith row of this list is the result of the ith fold
+                        #the ith row of this list is the result of the ith fold
+                        configuration_fold_comparison = [] 
 
                         fold_num = 1
 
                         # Initialize StratifiedKFold with 5 splits
                         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state = seed)
 
+                        #The stratified kfold will divide the training set into 5 folds 
                         for train_indices,val_indices in skf.split(X_train, y_train):
                             fold_result = []
 
@@ -252,7 +257,8 @@ for sample in sample_size:
                             
                             row_result = {**metrics, **configuration_dict} #this is a row of the csv file
 
-                            configuration_fold_comparison.append(row_result) #For every fold the row result is saved here
+                            #For every fold the row result is saved here
+                            configuration_fold_comparison.append(row_result)
                             
                             fold_result.append(row_result)
 
@@ -276,6 +282,8 @@ for sample in sample_size:
 
                         df_congif = pd.DataFrame(configuration_fold_comparison)
 
+                        #For all the folds of the configuration, the results are averaged
+                        #This file is the average result of the 5 folds for that specific configuration
                         overall_fold_results = data.results_cv(df_congif)
 
                         #path to export the overall results of the configuration

@@ -284,12 +284,15 @@ Note:
 The rows of the df should be:
 ['n_layers', 'n_heads', 'embedding_size', 'batch_size', 'max_epochs', 'balanced_accuracy', 'accuracy', 'log_loss', 'roc_auc', 'f1', 'precision', 'recall']
 '''
+
+#This funcion average the results from the 5 Fold cross validation and returns just one row with the mean 
+# and std of the statistical columns
 def results_cv(df):
     # Columns that will remain the same (assuming these values are the same for all rows)
     constant_columns = ['n_layers', 'n_heads', 'embedding_size', 'batch_size']
 
     stats_columns = [
-        "balanced_accuracy", "accuracy", "f1", "precision", "recall"
+        "balanced_accuracy", "accuracy", "f1", "precision", "recall", "max_epochs"
     ]
     
     # Get the mean and std for the statistical columns
