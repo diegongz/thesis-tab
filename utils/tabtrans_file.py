@@ -138,7 +138,7 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
                                             "x_categorical": X_train[:, n_numerical:].astype(np.int32)
                                             }
                                             )
-        metrics = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices], multiclass = multiclass_val)
+        metrics = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices])
     
     else:
         #predictions
@@ -148,7 +148,7 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
         }
         )
 
-        metrics = evaluating.get_default_scores(y_test.astype(np.int64), predictions, multiclass = multiclass_val)
+        metrics = evaluating.get_default_scores(y_test.astype(np.int64), predictions)
 
         #add the training_time as a value in metrics dictionary
         metrics["time_trainning"] = training_time

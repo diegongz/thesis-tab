@@ -278,6 +278,12 @@ def get_dataset_name(ds_id):
 '''
 This function will import all the results from all the folds and reduce all the info in a single row
 
+        'balanced_accuracy': balanced_accuracy,
+        'accuracy': accuracy,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall,
+
 Note:
 The rows of the df should be:
 ['n_layers', 'n_heads', 'embedding_size', 'batch_size', 'max_epochs', 'balanced_accuracy', 'accuracy', 'log_loss', 'roc_auc', 'f1', 'precision', 'recall']
@@ -286,12 +292,10 @@ def results_cv(df):
     # Columns that will remain the same (assuming these values are the same for all rows)
     constant_columns = ['n_layers', 'n_heads', 'embedding_size', 'batch_size']
 
-    # Columns for which we need to calculate mean and std
     stats_columns = [
-        'max_epochs', 'balanced_accuracy', 'accuracy', 'log_loss',
-        'roc_auc', 'f1', 'precision', 'recall'
+        "balanced_accuracy", "accuracy", "f1", "precision", "recall"
     ]
-
+    
     # Get the mean and std for the statistical columns
     mean_values = df[stats_columns].mean()
     std_values = df[stats_columns].std()
@@ -307,8 +311,8 @@ def results_cv(df):
         new_values.append(std_values[col])
 
     # Combine the constant values and the new calculated values
-    final_columns = constant_columns + new_columns
-    final_values = list(df[constant_columns].iloc[0]) + new_values
+    final_columns =  new_columns + constant_columns
+    final_values =  new_values + list(df[constant_columns].iloc[0])
 
     # Create the new DataFrame with one row
     resuls_df = pd.DataFrame([final_values], columns=final_columns)

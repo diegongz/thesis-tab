@@ -1,47 +1,28 @@
-from sklearn import metrics
+from sklearn.metrics import balanced_accuracy_score, accuracy_score, f1_score, precision_score, recall_score
 import numpy as np
 import skorch
 import os
 
-def get_default_scores(target, prediction_proba, prefix="", multiclass=False):
+def get_default_scores(y_test, y_pred):
 
-    prediction = np.argmax(prediction_proba, axis=1)
-    labels = np.arange(prediction_proba.shape[-1])
+    prediction = np.argmax(y_pred, axis=1)
 
-    scores = {
-        f"{prefix}balanced_accuracy": metrics.balanced_accuracy_score(target, prediction),
-        f"{prefix}accuracy": metrics.accuracy_score(target, prediction),
-        f"{prefix}log_loss": metrics.log_loss(target, prediction_proba, labels=labels)
+    balanced_accuracy = balanced_accuracy_score(y_test, prediction)
+    accuracy = accuracy_score(y_test, prediction)
+    f1 = f1_score(y_test, prediction, average='weighted')
+    precision = precision_score(y_test, prediction, average='weighted')
+    recall = recall_score(y_test, prediction, average='weighted')
+
+    metrics = {
+        'balanced_accuracy': balanced_accuracy,
+        'accuracy': accuracy,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall,
     }
 
-    if not multiclass:
-        scores = {
-            **scores,
-            f"{prefix}roc_auc": metrics.roc_auc_score(target, prediction),
-            f"{prefix}f1": metrics.f1_score(target, prediction),
-            f"{prefix}precision": metrics.precision_score(target, prediction),
-            f"{prefix}recall": metrics.recall_score(target, prediction)
-        }
+    return metrics
 
-    return scores
-
-def get_default_feature_selection_scores(target, prediction, prefix="", multiclass=False):
-
-    scores = {
-        f"{prefix}balanced_accuracy": metrics.balanced_accuracy_score(target, prediction),
-        f"{prefix}accuracy": metrics.accuracy_score(target, prediction)
-    }
-
-    if not multiclass:
-        scores = {
-            **scores,
-            f"{prefix}roc_auc": metrics.roc_auc_score(target, prediction),
-            f"{prefix}f1": metrics.f1_score(target, prediction),
-            f"{prefix}precision": metrics.precision_score(target, prediction),
-            f"{prefix}recall": metrics.recall_score(target, prediction)
-        }
-
-    return scores
 
 def list_models(dir):
     model_path = []

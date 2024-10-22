@@ -162,9 +162,9 @@ for sample in sample_sizes:
 
             combined_results = pd.concat(all_data, ignore_index=True)
         
-        # Now calculate the mean and std for columns 1 to 8
-        mean_values = combined_results.iloc[:, :8].mean()
-        std_values = combined_results.iloc[:, :8].std()
+        # Now calculate the mean and std for columns 1 to 6 [balanced_accuracy, accuracy, f1, precision, recall, time_trainning]
+        mean_values = combined_results.iloc[:, :6].mean()
+        std_values = combined_results.iloc[:, :6].std()
 
         # Create a dictionary with the new column names
         mean_columns = {col: f"{col}_mean" for col in combined_results.columns[:8]}

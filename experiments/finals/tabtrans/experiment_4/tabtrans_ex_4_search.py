@@ -53,7 +53,7 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [100,80,60,40,20]
+sample_size = [100,80,60,40,20,10]
 seed = 11
 
 
@@ -71,6 +71,13 @@ for sample in sample_size:
         
         #import data for the task
         X_train, X_test, y_train, y_test, _, _, n_instances, n_labels, n_numerical, n_categories = data.import_data(df_id)
+            
+        #Find if I have multiclass in the y's
+        if len(np.unique(y_train)) > 2:
+            multiclass_val = True
+        
+        else:
+            multiclass_val = False
         
         #In this list I will append the dicts that represent the rows of the csv file
         #table_of_results = []
@@ -127,7 +134,7 @@ for sample in sample_size:
                         else:
                             configuration_dict["max_epochs"] = len(model.history)- 10 
 
-                        row_result = {**configuration_dict ,**metrics} #this is a row of the csv file
+                        row_result = {**metrics, **configuration_dict} #this is a row of the csv file
 
                         configuration_fold_comparison.append(row_result) #For every fold the row result is saved here
                         
@@ -243,7 +250,7 @@ for sample in sample_size:
                             else:
                                 configuration_dict["max_epochs"] = len(model.history)- 10 
                             
-                            row_result = {**configuration_dict ,**metrics} #this is a row of the csv file
+                            row_result = {**metrics, **configuration_dict} #this is a row of the csv file
 
                             configuration_fold_comparison.append(row_result) #For every fold the row result is saved here
                             
