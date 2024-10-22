@@ -50,7 +50,7 @@ param_grid = {
 
 
 df_id = 31
-sample_size = [100,80,60,40,20]
+sample_size = [10]
 seed = 11
 
 name_df = data.get_dataset_name(df_id)
@@ -129,7 +129,7 @@ for sample in sample_size:
             os.makedirs(seed_folder, exist_ok=True)
 
             #create a random sample of instances 
-            _, _, general_n_percent = data.reduce_size(y_train, train_indices, val_indices, sample, random_seed)
+            general_n_percent = data.reduce_size(y_train, train_indices, val_indices, sample, random_seed)
 
             #create the new X_train and y_train with the reduced size, this sets are the ones that will enter to the 5 fold cross validation
             X_train = X_train[general_n_percent]

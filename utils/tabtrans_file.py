@@ -44,13 +44,6 @@ hyperparameter_search: By default is False, which mean will train a normal model
 '''
 def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False):
 
-    #Find if I have multiclass in the y's
-    if len(np.unique(y_train)) > 2:
-        multiclass_val = True
-    
-    else:
-        multiclass_val = False
-
     print(f"Embedding Size: {embedding_size}")
     print(f"Number of Layers: {n_layers}")
     print(f"Number of Heads: {n_heads}")

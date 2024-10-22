@@ -46,7 +46,7 @@ path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans_cv'
 #create the directory if it does not exist
 os.makedirs(path_to_final_tabtrans, exist_ok=True)
 
-sample_sizes = [100, 80, 60, 40, 20, 10] # 100, 80, 60, 40, 20, 10
+sample_sizes = [10] # 100, 80, 60, 40, 20, 10
 
 for sample in sample_sizes:
     path_of_size = f'{path_to_hyperparameters}/{sample}'
@@ -108,7 +108,7 @@ for sample in sample_sizes:
 
             X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories = data.import_data(df_id)
             
-            _, _, general_n_percent = data.reduce_size(y_train, train_indices, val_indices, sample, random_seed)
+            general_n_percent = data.reduce_size(y_train, train_indices, val_indices, sample, random_seed)
 
             #create the new X_train and y_train with the reduced size, this sets are the ones that will enter to the 5 fold cross validation
             X_train = X_train[general_n_percent]

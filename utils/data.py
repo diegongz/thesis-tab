@@ -256,11 +256,7 @@ def reduce_size(y_train, train_indices, val_indices, sample_size, seed):
 
     general_n_percent, _ = model_selection.train_test_split(indices, train_size = sample_size/100, random_state= seed, stratify = y_train)
 
-    validation_size = int(train_indices.shape[0]*(.20))
-
-    train_indices, val_indices = model_selection.train_test_split(general_n_percent, test_size= validation_size, random_state= seed, stratify = y_train[general_n_percent]) 
-
-    return train_indices, val_indices, general_n_percent
+    return general_n_percent
 
 #-------------------------------------------------------------------------------------------
 def get_dataset_name(ds_id):
