@@ -49,8 +49,8 @@ param_grid = {
 '''
 
 
-df_id = 31
-sample_size = [10]
+df_id = 3485
+sample_size = [100, 80, 60, 40, 20, 10, 5]
 seed = 11
 
 name_df = data.get_dataset_name(df_id)
@@ -135,6 +135,9 @@ for sample in sample_size:
             X_train = X_train[general_n_percent]
             y_train = y_train[general_n_percent]
 
+            # Get unique elements and their counts
+            unique_elements, counts = np.unique(y_train, return_counts=True)
+              
             best_model, best_params, cv_results, best_score = xgboost_file.xgboost_bayesian(search_space, X_train, y_train, n_labels)
 
             results_param_selection = best_params.copy()

@@ -18,6 +18,8 @@ sys.path.append(project_path) #This helps to be able to import the data from the
 from utils import data, tabtrans_file, plots
 import pandas as pd
 import numpy as np
+import pickle
+
 
 '''
 FINAL DATASETS
@@ -33,6 +35,8 @@ FINAL DATASETS
 '''
 
 df_id = 1484
+sample_sizes = [100] # 100, 80, 60, 40, 20, 10
+
 
 name_df = data.get_dataset_name(df_id)
 
@@ -45,8 +49,6 @@ path_to_final_tabtrans = f'{path_of_datset}/tabtrans/final_tabtrans_cv'
 
 #create the directory if it does not exist
 os.makedirs(path_to_final_tabtrans, exist_ok=True)
-
-sample_sizes = [10] # 100, 80, 60, 40, 20, 10
 
 for sample in sample_sizes:
     path_of_size = f'{path_to_hyperparameters}/{sample}'
@@ -68,8 +70,7 @@ for sample in sample_sizes:
         epochs = int(hyperparameters["max_epochs_mean"])
 
         model, metrics = tabtrans_file.general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False)
-
-
+      
         metrics["n_layers"] = n_layers
         metrics["n_heads"] = n_heads
         metrics["embedding_size"] = embedding_size
@@ -84,6 +85,11 @@ for sample in sample_sizes:
 
         #create the directory if it does not exist
         os.makedirs(final_tab_size_path, exist_ok=True)
+        
+        #save model
+        path_to_modal = f'{final_tab_size_path}/final_model_{name_df}_{sample}.pkl'
+        with open(path_to_modal, 'wb') as f:
+            pickle.dump(model, f)
 
         final_result_path = f'{final_tab_size_path}/results.csv'
 

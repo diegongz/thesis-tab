@@ -18,6 +18,7 @@ from sklearn.metrics import confusion_matrix, balanced_accuracy_score, accuracy_
 from sklearn.model_selection import GridSearchCV
 import xgboost as xgb
 from skopt import BayesSearchCV
+from sklearn.model_selection import StratifiedKFold,StratifiedShuffleSplit
 
 
 
@@ -44,18 +45,21 @@ def xgboost_bayesian(params, X_train, y_train, n_labels):
         n_jobs=-1
     )
     
+    # Initialize StratifiedKFold
+    stratified_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=11)
+        
     # Initialize BayesSearchCV
     bayes_search = BayesSearchCV(
         estimator = model,
         search_spaces = params,
         n_iter = 30,   # Number of parameter settings that are sampled
-        cv = 5,        # Cross-validation splitting strategy
+        cv = stratified_kfold,        # Cross-validation splitting strategy
         n_jobs = -1,   # Use all available cores
         random_state = 11,
         verbose= 2,  # Controls the verbosity: 2 given that we want to monitor how is running
         scoring='balanced_accuracy'
     )
-
+    
     # Perform the search
     bayes_search.fit(X_train, y_train)
 

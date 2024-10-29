@@ -53,11 +53,11 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [100,80,60,40,20,10]
+sample_size = [5,10,20]
 seed = 11
 
 
-df_id = 233092
+df_id = 3485
 
 name_df = data.get_dataset_name(df_id)
 
