@@ -31,7 +31,7 @@ FINAL DATASETS
 233092 arrhythmia 280
 3485 scene 300
 9976 madelon 501
-3481 isolet 618 (TO MUCH INSTANCES) 
+41966 isolet (600x618)
 '''
 
 df_id = 1484
