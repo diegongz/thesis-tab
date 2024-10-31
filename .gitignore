@@ -4,6 +4,7 @@ __pycache__
 data/**/*.csv
 experiments/**/*.csv
 data/**/*.npy
+experiments/**/*.png
 checkpoint/**/*.pt
 checkpoint/**/*history.json
 checkpoint/**/*.jl

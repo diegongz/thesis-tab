@@ -49,7 +49,7 @@ param_grid = {
 '''
 
 
-df_id = 3485
+df_id = 41966
 sample_size = [100, 80, 60, 40, 20, 10, 5]
 seed = 11
 
