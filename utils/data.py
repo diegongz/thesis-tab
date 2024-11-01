@@ -244,7 +244,8 @@ def import_data(id): #we want to use the task id
     y_val_final = y_train[val_indices]
 
     return X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories
-
+    #n_instances: is the number of instances in trainning set
+    #n_labels: is the number of classes in the dataset
 #-------------------------------------------------------------------------------------------
 ''' 
 Takes random sample from X_train of size 80-60-40-20% of the original size
