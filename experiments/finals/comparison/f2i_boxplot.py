@@ -43,29 +43,45 @@ n_categories_column = []
 n_instances_column = []
 n_features_column = []
 
+
 # Loop through each folder in the directory
 for df_id in datasets_ids:
     
     #Get the name of the datasets
     name_df = data.get_dataset_name(df_id)
+    datset_column.append(name_df)
     
     #Get the total number of features and instances in the dataset
-    X_train, _, _, _, _, _, n_instances_train, n_labels, n_numerical, n_categories = data.import_data(df_id)
-    n_features = X_train.shape[1]
-    print(n_features)
-
+    X_train, _, _, _, _, _, n_instances_train, n_labels, _, _ = data.import_data(df_id)
     
+    n_categories_column.append(n_labels) #Add the number of classes in that dataset
+    
+    n_instances_column.append(n_instances_train) #Add the number of instances in that dataset
+
+    n_features = X_train.shape[1] - 1 #We delete the target/class column
+    n_features_column.append(n_features)
+        
     #Get the path of the dataset
     path_of_datset = f'{path_of_models}/{name_df}'
     
+    n_sample_sizes = []
 #-------------------------------------------------------------------------------
-    #TABTRANS INFO EXTRACTION
+    #XGBoost INFO EXTRACTION
+    path_of_xgboost = f'{path_of_datset}/xgboost/final_xgboost'
+    
     path_of_tabtrans = f'{path_of_datset}/tabtrans'
+
+    
+    # Loop through each folder in the directory
+    for sample_size in os.listdir(path_of_models):
+        folder_path = os.path.join(path_of_models, folder_name)
     
     
     
     
-    path_of_xgboost = f'{path_of_datset}/xgboost'
+    
+    
+    
     
     
 
