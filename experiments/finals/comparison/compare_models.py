@@ -27,8 +27,8 @@ FINAL DATASETS
 '''
 
 
-df_id = 1484
-sample_size = [100, 80, 60, 40, 20, 10]
+df_id = 3481
+sample_size = [100, 80, 60, 40, 20, 10, 5]
 
 name_df = data.get_dataset_name(df_id)
 

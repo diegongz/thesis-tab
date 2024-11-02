@@ -26,16 +26,16 @@ FINAL DATASETS
 1484 lsvt
 31 credit 
 12 mfeat-factors 217 pass
-20 mfeat-pixel 241 #have probelms this dataset check this one
 9964 semeion 257 pass
 233092 arrhythmia 280
 3485 scene 300
-9976 madelon 501
 41966 isolet (600x618)
+9976 madelon 501
+20 mfeat-pixel 241 #have probelms this dataset check this one
 '''
 
-df_id = 1484
-sample_sizes = [100] # 100, 80, 60, 40, 20, 10
+df_id = 41966
+sample_sizes = [100, 80, 60, 40, 20, 10, 5] # 100, 80, 60, 40, 20, 10, 5
 
 
 name_df = data.get_dataset_name(df_id)
