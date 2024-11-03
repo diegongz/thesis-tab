@@ -125,12 +125,22 @@ data = pd.DataFrame({
 # Reshape data using pd.melt to create a long format
 data_melted = pd.melt(
     data, 
-    id_vars=['f2i'], 
+    id_vars=['f2i',"n_features", "n_instances"], 
     value_vars=['balanced_accuracy_xgboost', 'balanced_accuracy_tabtrans'],
     var_name='Model', 
     value_name='Balanced Accuracy'
 )
 
+# Get unique values for 'n_features' and 'n_instances'
+unique_n_features = np.sort(data_melted['n_features'].unique())
+unique_n_instances = np.sort(data_melted['n_instances'].unique())
+
+print("Unique values for 'n_features':", unique_n_features)
+print("Unique values for 'n_instances':", unique_n_instances)
+
+
+#----------------------------------------------
+#BOX PLOT FOR F2I
 
 # Calculate maximum value of f2i
 max_f2i = round(data_melted['f2i'].max())
@@ -155,7 +165,7 @@ data_melted['Model'] = data_melted['Model'].replace({
     'balanced_accuracy_tabtrans': 'TabTrans'
 })
 
-path_for_images = f"{path_of_models}/all_datasets"
+path_for_images = f"{path_of_models}/all_datasets/boxplots"
 
 # Create box plot with f2i intervals
 fig = px.box(
@@ -174,3 +184,66 @@ fig.update_layout(title=dict(text="Balanced Accuracy across Feature-to-Instance 
 
 # Export the figure as a PNG image
 fig.write_image(f"{path_for_images}/boxplot_f2i.png", scale=2)
+
+
+#R---------------------------------------------------------------------------------------------
+#BOX PLOT FOR N_FEATURES
+max_n_features = round(data_melted['n_features'].max())
+
+#Let's note that the values for n_features are: [19 215 255 278 298 309 616]
+#For this particular case I will go for intervals of the form [0-250], [250,300], [300-616]
+
+#Adjust The intervals of the f2i
+# Define bins dynamically, ensuring the last bin exceeds the maximum f2i value
+# Define the intervals and corresponding labels
+bins = [0, 250, 300, 620]
+labels = ['0-250', '250-300', '300-620']
+
+# Create the new column based on the intervals
+data_melted['n_features_interval'] = pd.cut(data_melted['n_features'], bins=bins, labels=labels, right =False)
+
+
+
+# Create box plot with f2i intervals
+fig = px.box(
+    data_melted,
+    x='n_features_interval',
+    y='Balanced Accuracy',
+    color='Model',
+    color_discrete_map={'XGBoost': 'red', 'TabTrans': 'blue'},
+    category_orders={'n_features_interval': labels},
+    points="all"
+)
+
+fig.update_xaxes(title_text='Intervals for Number of Features')
+# Center the title
+fig.update_layout(title=dict(text="Balanced Accuracy across Features", x=0.5))
+
+# Export the figure as a PNG image
+fig.write_image(f"{path_for_images}/boxplot_features.png", scale=2)
+
+#----------------------------------------------------------------------------------------------------------
+#BOX PLOT FOR N_INSTANCES
+bins = [0,500,1000,2000]
+labels = ['0-500', '500-1000',"1000-2000"]
+
+# Create the new column based on the intervals
+data_melted['n_instances_interval'] = pd.cut(data_melted['n_instances'], bins=bins, labels=labels, right =False)
+
+# Create box plot with f2i intervals
+fig = px.box(
+    data_melted,
+    x='n_instances_interval',
+    y='Balanced Accuracy',
+    color='Model',
+    color_discrete_map={'XGBoost': 'red', 'TabTrans': 'blue'},
+    category_orders={'n_instances_interval': labels},
+    points="all"
+)
+
+fig.update_xaxes(title_text='Intervals for Number of Instances')
+# Center the title
+fig.update_layout(title=dict(text="Balanced Accuracy across Instances", x=0.5))
+
+# Export the figure as a PNG image
+fig.write_image(f"{path_for_images}/boxplot_instances.png", scale=2)
