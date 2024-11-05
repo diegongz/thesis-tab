@@ -18,7 +18,6 @@ sys.path.append(project_path) #This helps to be able to import the data from the
 from utils import data, tabtrans_file, plots
 import pandas as pd
 import numpy as np
-import pickle
 
 
 '''
@@ -34,8 +33,8 @@ FINAL DATASETS
 20 mfeat-pixel 241 #have probelms this dataset check this one
 '''
 
-df_id = 41966
-sample_sizes = [100, 80, 60, 40, 20, 10, 5] # 100, 80, 60, 40, 20, 10, 5
+df_id = 233092
+sample_sizes = [100] # 100, 80, 60, 40, 20, 10, 5
 
 
 name_df = data.get_dataset_name(df_id)
@@ -55,6 +54,12 @@ for sample in sample_sizes:
 
     if sample == 100:
         
+        #folder of the size
+        final_tab_size_path = f'{path_to_final_tabtrans}/{sample}' 
+
+        #create the directory if it does not exist
+        os.makedirs(final_tab_size_path, exist_ok=True)
+        
         #Import the data
         X_train, X_test, y_train, y_test, train_indices, val_indices, n_instances, n_labels, n_numerical, n_categories = data.import_data(df_id)
 
@@ -69,7 +74,7 @@ for sample in sample_sizes:
         batch_size = int(hyperparameters["batch_size"])
         epochs = int(hyperparameters["max_epochs_mean"])
 
-        model, metrics = tabtrans_file.general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False)
+        model, metrics = tabtrans_file.general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False, save_checkpoint = True, general_path_checkpoints = final_tab_size_path, sample_size = sample)
       
         metrics["n_layers"] = n_layers
         metrics["n_heads"] = n_heads
@@ -79,18 +84,14 @@ for sample in sample_sizes:
 
         # Convert dictionary to DataFrame
         df = pd.DataFrame(metrics, index=[0])
-
-        #folder of the size
-        final_tab_size_path = f'{path_to_final_tabtrans}/{sample}' 
-
-        #create the directory if it does not exist
-        os.makedirs(final_tab_size_path, exist_ok=True)
         
         #save model
+        '''
         path_to_modal = f'{final_tab_size_path}/final_model_{name_df}_{sample}.pkl'
         with open(path_to_modal, 'wb') as f:
             pickle.dump(model, f)
-
+        '''
+        
         final_result_path = f'{final_tab_size_path}/results.csv'
 
         # Convert the DataFrame to a CSV file

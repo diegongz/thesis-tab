@@ -41,9 +41,12 @@ embedding_size: embedding size used for the embeddings
 batch_size: size of the batches
 epochs: max number of epochs
 hyperparameter_search: By default is False, which mean will train a normal model (without doing validation), if True then will use the validation set to train the best model
+save_checkpoint: If True then will save the model for certain epochs
+general_path_checkpoints: Path of the folder of final_tabtrans (for now we will use the /home/diego-ngz/Git/thesis-tabtrans/Final_models_4/credit-g/tabtrans/final_tabtrans_cv)
+sample_size: The size of the sample is needed to save the checkpoints
 '''
-def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False):
-
+def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indices, n_labels, n_numerical, n_categories, n_layers, n_heads, embedding_size, batch_size, epochs, hyperparameter_search = False, save_checkpoint = False, general_path_checkpoints = None, sample_size = None):
+    print("--------------------------------------------------------------------")
     print(f"Embedding Size: {embedding_size}")
     print(f"Number of Layers: {n_layers}")
     print(f"Number of Heads: {n_heads}")
@@ -100,41 +103,125 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
             optimizer__weight_decay=1e-4
         )
         
-    else:
-        model = skorch.NeuralNetClassifier(
-            module = module,
-            criterion=torch.nn.CrossEntropyLoss,
-            optimizer=torch.optim.AdamW,
-            device= "cuda", #cuda" if torch.cuda.is_available() else
-            batch_size = batch_size,
-            train_split = None,
-            max_epochs = epochs,
-            optimizer__lr=1e-4,
-            optimizer__weight_decay=1e-4
-        )
-
-    start_time = time.time()  # Start the timer to count how long does it takes
-    
-    #TRAINING
-    model = model.fit(X={
+        #Trainning 
+        model = model.fit(X={
             "x_numerical": X_train[:, :n_numerical].astype(np.float32),
             "x_categorical": X_train[:, n_numerical:].astype(np.int32)
             }, 
             y=y_train.astype(np.int64)
             )
-    end_time = time.time()  # Stop the timer
-    training_time = end_time - start_time  # Calculate the elapsed time    
-    
-    if hyperparameter_search == True:       
+        
+        #Predictions and compute the metrics
         predictions = model.predict_proba(X={
                                             "x_numerical": X_train[:, :n_numerical].astype(np.float32),
                                             "x_categorical": X_train[:, n_numerical:].astype(np.int32)
                                             }
                                             )
         metrics = evaluating.get_default_scores(y_train[val_indices].astype(np.int64), predictions[val_indices])
-    
+
+    #If We don't want hyperparameter search, then we want to train the Final model
+    #FINAL MODEL
     else:
-        #predictions
+        if save_checkpoint == True: #this means I want to save the model for certain epochs
+            path_to_checkpoint = os.path.join(general_path_checkpoints, "checkpoints") 
+            os.makedirs(path_to_checkpoint, exist_ok=True)
+            
+            '''
+            For now I want to save the model in 5 stages of trainning, then i will first save the intervals size
+            which is the epochs divided by 5, and then i will save the model for
+            1. 1*intervals_size
+            2. 2*intervals_size
+            3. 3*intervals_size
+            4. 4*intervals_size
+            5. the last epoch: epochs variable
+            '''
+            intervals_size = epochs // 5 
+          
+            '''
+            The first model will be trained for the number of epochs intervals_size.            '''
+            epochs_to_save = [intervals_size, 2*intervals_size, 3*intervals_size, 4*intervals_size, epochs]
+          
+            #First i will train the model for the number of epochs = intervals_size
+          
+            #first lest define the train end checkpoint
+            train_end_cp = TrainEndCheckpoint(dirname = f"{path_to_checkpoint}/epoch_{intervals_size}")
+            
+            model = skorch.NeuralNetClassifier(
+                module = module,
+                criterion=torch.nn.CrossEntropyLoss,
+                optimizer=torch.optim.AdamW,
+                device= "cuda", #cuda" if torch.cuda.is_available() else
+                batch_size = batch_size,
+                train_split = None,
+                max_epochs = intervals_size,
+                optimizer__lr=1e-4,
+                optimizer__weight_decay=1e-4,
+                callbacks=[train_end_cp]
+                )
+            
+            model = model.fit(X={
+                "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+                "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+                }, 
+                y=y_train.astype(np.int64)     
+                )
+
+            print("--------------------------------------------------------------------")
+            print(f"Model saved for {intervals_size} epochs")
+            
+            for i in range(1,len(epochs_to_save)):
+                
+                epoch = epochs_to_save[i]
+                
+                load_state = LoadInitState(train_end_cp) #load the state of the past model
+                train_end_cp = TrainEndCheckpoint(dirname = f"{path_to_checkpoint}/epoch_{epoch}")
+                
+                #create the model
+                model = skorch.NeuralNetClassifier(
+                        module = module,
+                        criterion=torch.nn.CrossEntropyLoss,
+                        optimizer=torch.optim.AdamW,
+                        device= "cuda", #cuda" if torch.cuda.is_available() else
+                        batch_size = batch_size,
+                        train_split = None,
+                        max_epochs = epochs_to_save[i]-epochs_to_save[i-1], #It will train for the difference between the epochs given that it will start where the last end
+                        optimizer__lr=1e-4,
+                        optimizer__weight_decay=1e-4,
+                        callbacks=[load_state, train_end_cp]
+                        )
+
+                model = model.fit(X={
+                    "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+                    "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+                    }, 
+                    y=y_train.astype(np.int64)
+                    )
+
+        else: #We dont want to save the model then i just train one time
+            model = skorch.NeuralNetClassifier(
+                module = module,
+                criterion=torch.nn.CrossEntropyLoss,
+                optimizer=torch.optim.AdamW,
+                device= "cuda", #cuda" if torch.cuda.is_available() else
+                batch_size = batch_size,
+                train_split = None,
+                max_epochs = epochs,
+                optimizer__lr=1e-4,
+                optimizer__weight_decay=1e-4
+            )
+        
+            #TRAINING
+            model = model.fit(X={
+                    "x_numerical": X_train[:, :n_numerical].astype(np.float32),
+                    "x_categorical": X_train[:, n_numerical:].astype(np.int32)
+                    }, 
+                    y=y_train.astype(np.int64)
+                    )
+        '''
+        This Prediction block is if we decide to train the final model (Hyperparameter_search = False). Independent if i want to save the model for 
+        certain epochs or not. 
+        '''
+        
         predictions = model.predict_proba(X={
         "x_numerical": X_test[:, :n_numerical].astype(np.float32),
         "x_categorical": X_test[:, n_numerical:].astype(np.int32)
@@ -142,10 +229,7 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
         )
 
         metrics = evaluating.get_default_scores(y_test.astype(np.int64), predictions)
-
-        #add the training_time as a value in metrics dictionary
-        metrics["time_trainning"] = training_time
-
+    
     return model, metrics
 
 
@@ -319,12 +403,4 @@ def final_tab_trans(ds_id, X_train, X_test, y_train, y_test, train_indices, val_
 
 
     fast_model.export_to_csv(results_table, columns_names, sample_size_folder)
-
-
-
-
-
-
-
-
 
