@@ -38,8 +38,8 @@ FINAL DATASETS
 9964 semeion 257 pass
 233092 arrhythmia 280
 3485 scene 300
-9976 madelon 501
 41966 isolet (600x618)
+2 anneal (898x39)
 '''
 
 
@@ -52,11 +52,11 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [5,10,20]
+sample_size = [100]
 seed = 11
 
 
-df_id = 3485
+df_id = 2
 
 name_df = data.get_dataset_name(df_id)
 

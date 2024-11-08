@@ -151,7 +151,7 @@ def import_data(id): #we want to use the task id
     #set seed
     seed = 11
 
-    if id in [1484,1564,41966]: #two selected datasets with no task id, just id
+    if id in [1484,1564,41966,2]: #two selected datasets with no task id, just id
         df = read_dataset_by_id(id)
     else:
         task_id = id
@@ -261,7 +261,7 @@ def reduce_size(y_train, train_indices, val_indices, sample_size, seed):
 
 #-------------------------------------------------------------------------------------------
 def get_dataset_name(ds_id):
-    if ds_id in [1484,1564,41966]: #two selected datasets with no task id, just id
+    if ds_id in [1484,1564,41966,2]: #two selected datasets with no task id, just id
         dataset = openml.datasets.get_dataset(ds_id)
         dataset_name = dataset.name
     else:

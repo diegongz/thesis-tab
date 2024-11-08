@@ -3,6 +3,10 @@ from utils import attention, data, training
 import skorch
 import torch.nn as nn
 import torch
+import numpy as np
+import plotly.express as px
+from sklearn.cluster import KMeans
+
 
 """
 Eneabling and extracting the attention cubes.
@@ -66,6 +70,31 @@ def attention_matrix(model, X_train, y_train, n_numerical, n_layers, n_heads, n_
     cumulative_attns = np.array(cumulative_attns)
     
     return cumulative_attns
+
+def average_entropy_matrix(matrix):
+    """
+    This function receives a matrix of shape (n_instances, n_features) and returns the average entropy of the matrix.
+    """
+    n_features = matrix.shape[1]
+    
+    # Compute the entropy for rows
+    entropy_per_row = np.apply_along_axis(entropy, 1, attention_matrix, base=2) / np.log2(n_features) 
+    
+    # Compute the average entropy
+    average_entropy = np.mean(entropy_per_row)
+    
+    return average_entropy
+
+''' 
+Function that computes the attention matrix and then returns the average entropy of that matrix
+'''
+def entropy_attention_matrix(net, X_train, y_train, n_numerical, n_layers, n_heads, n_features):
+    matrix = attention_matrix(net, X_train, y_train, n_numerical, n_layers, n_heads, n_features)
+    
+    print("Model Output Shape:", net.predict(X_train).shape)
+    print("Target Labels Shape:", y_train.shape)
+    
+    return average_entropy_matrix(matrix)
 
 '''
 Given a df_id and an specific epoch this function will return the attention matrix
@@ -155,3 +184,50 @@ def matrix_for_epoch(df_id, epoch, sample_size, project_path):
     matrix = attention_matrix(model, X_train, y_train, n_numerical, n_layers, n_heads, n_features)
     
     return matrix
+
+def heatmap_matrix(cumulative_attns, df_name, save_path):
+    """
+    Each row represents a test instance, while each column
+    represents a feature.
+    """
+    kmeans = KMeans(n_clusters=4, random_state=11)
+    kmeans.fit(cumulative_attns)
+    
+    #get the labels
+    cluster_labels = kmeans.labels_
+    
+    #sortd indices based on cluster labers
+    sorted_indices = np.argsort(cluster_labels) #returns the indices that would sort the array cluster_labels
+    
+    #sorted matrix by labels
+    sorted_cumulative_attns = cumulative_attns[sorted_indices]
+    
+    #Now order the cluster labels based on the sorted indices to have the instance ordered, and the clusters ordered and also the labels
+    sorted_cluster_labels = cluster_labels[sorted_indices]
+    
+    #Here I will save the index of the last element of each cluster
+    last_cluster_indices = []
+
+    for i in range(len(sorted_cluster_labels)-1):
+        actual_value = sorted_cluster_labels[i]
+        next_value = sorted_cluster_labels[i+1]
+        
+        if actual_value != next_value:
+            last_cluster_indices.append(i)
+    
+    
+    len_cumm_vector = sorted_cumulative_attns.shape[1]
+
+    # last_cluster_indices is a list of indices where you want to add NaN rows
+    nan_row = np.full(len_cumm_vector, np.nan)
+
+    # Insert NaN rows
+    #It does it in reverse in order to not change the indices of the elements
+    for i in sorted(last_cluster_indices, reverse=True):
+        sorted_cumulative_attns = np.insert(sorted_cumulative_attns, i + 1, nan_row, axis=0) #insert the NaN array row in the sorted_cumulative_attns
+        
+        
+    fig = px.imshow(sorted_cumulative_attns, color_continuous_scale='Inferno', aspect='auto', origin='lower', title = f'Attention Matrix for {df_name}')
+
+    # Save the figure as a PNG
+    fig.write_image(save_path, scale=3)

@@ -31,9 +31,10 @@ FINAL DATASETS
 41966 isolet (600x618)
 9976 madelon 501
 20 mfeat-pixel 241 #have probelms this dataset check this one
+2 anneal (898x39)
 '''
 
-df_id = 233092
+df_id = 2
 sample_sizes = [100] # 100, 80, 60, 40, 20, 10, 5
 
 
