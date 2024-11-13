@@ -52,7 +52,7 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [100]
+sample_size = [80,60,40,20,10,5]
 seed = 11
 
 

@@ -131,6 +131,13 @@ data_melted = pd.melt(
     value_name='Balanced Accuracy'
 )
 
+# Define the path where you want to save the CSV
+path_to_save = "/home/diego-ngz/Git/thesis-tabtrans/Final_models_4/all_datasets/balanced_accuracies.csv"
+
+# Save to CSV
+data_melted.to_csv(path_to_save, index=False)
+
+'''
 # Get unique values for 'n_features' and 'n_instances'
 unique_n_features = np.sort(data_melted['n_features'].unique())
 unique_n_instances = np.sort(data_melted['n_instances'].unique())
@@ -247,3 +254,5 @@ fig.update_layout(title=dict(text="Balanced Accuracy across Instances", x=0.5))
 
 # Export the figure as a PNG image
 fig.write_image(f"{path_for_images}/boxplot_instances.png", scale=2)
+
+'''

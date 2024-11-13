@@ -6,6 +6,7 @@ import torch
 import numpy as np
 import plotly.express as px
 from sklearn.cluster import KMeans
+from scipy.stats import entropy
 
 
 """
@@ -78,7 +79,7 @@ def average_entropy_matrix(matrix):
     n_features = matrix.shape[1]
     
     # Compute the entropy for rows
-    entropy_per_row = np.apply_along_axis(entropy, 1, attention_matrix, base=2) / np.log2(n_features) 
+    entropy_per_row = np.apply_along_axis(entropy, 1, attention_matrix, base=2) / np.log2(n_features+1) 
     
     # Compute the average entropy
     average_entropy = np.mean(entropy_per_row)
@@ -169,7 +170,6 @@ def matrix_for_epoch(df_id, epoch, sample_size, project_path):
             device= "cuda", #cuda" if torch.cuda.is_available() else
             batch_size = batch_size,
             train_split = None,
-            max_epochs = 10,
             optimizer__lr=1e-4,
             optimizer__weight_decay=1e-4,
         )
@@ -231,3 +231,7 @@ def heatmap_matrix(cumulative_attns, df_name, save_path):
 
     # Save the figure as a PNG
     fig.write_image(save_path, scale=3)
+    
+    
+def variation_distance(P, Q):
+    return 0.5 * np.sum(np.abs(P - Q))

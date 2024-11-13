@@ -427,7 +427,17 @@ def compare_models(ds_id, project_path):
     fig.savefig(path_to_save_plot)
 
 
-
+''' 
+Given a list it return the index such that have no improvment in the next 10 indices
+returns -1 is all the list is in drecreasing order
+'''
+def find_no_decrease_index(lst):
+    n = len(lst)
+    for i in range(n - 10):  # Stop at n - 10 to ensure there are 10 values after i
+        # Check if there exists a value in the next 10 steps that is not smaller than lst[i]
+        if any(lst[i] <= lst[j] for j in range(i + 1, i + 11)):
+            return i  # Return the first index that does not have decreasing improvement
+    return -1 
 
 
 

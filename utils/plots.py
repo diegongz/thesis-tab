@@ -97,3 +97,22 @@ def model_plots(model, title):
 
     # Return the combined figure
     return fig
+
+
+def three_lines_plot(x, y, z, w, label_1, label_2, label_3, title, path_to_save):
+    # Create the plot
+    plt.plot(x, y, color='red', label=f'{label_1}')
+    plt.plot(x, z, color='blue', label=f'{label_2}')
+    plt.plot(x, w, color='green', label=f'{label_3}')
+
+    plt.legend(loc="best")
+    
+    plt.title(f"{title}")  # Add the title here
+    
+    # Add labels and legend
+    plt.xlabel("Epochs")
+    
+    plt.savefig(path_to_save, dpi=300)
+    
+    # Clear the figure after saving to prevent overlay in future plots
+    plt.clf()  
