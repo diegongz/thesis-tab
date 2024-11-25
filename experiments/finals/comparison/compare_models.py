@@ -24,18 +24,24 @@ FINAL DATASETS
 3485 scene 300
 9976 madelon 501
 3481 isolet 618 (TO MUCH INSTANCES) 
+2 anneal (898x39)
 '''
 
 
-df_id = 3481
+df_id = 31
 sample_size = [100, 80, 60, 40, 20, 10, 5]
 
 name_df = data.get_dataset_name(df_id)
 
-path_of_datset = f'{project_path}/Final_models_4/{name_df}' #The path can be changed
 
-tabtrans_folder = f'{path_of_datset}/tabtrans/final_tabtrans_cv'
-xgboost_folder = f'{path_of_datset}/xgboost/final_xgboost'
+final_models_number_trans = 5
+final_models_number_xgboost = 4
+
+
+path_of_datset = f'{project_path}/Final_models_5/{name_df}' #The path can be changed
+
+tabtrans_folder = f'{project_path}/Final_models_{final_models_number_trans}/{name_df}/tabtrans/final_tabtrans_cv'
+xgboost_folder = f'{project_path}/Final_models_{final_models_number_xgboost}/{name_df}/xgboost/final_xgboost'
 
 tabtrans_means_ba = [] #ba = balanced accuracy
 tabtrans_std_ba = []

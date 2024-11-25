@@ -40,6 +40,9 @@ FINAL DATASETS
 3485 scene 300
 41966 isolet (600x618)
 2 anneal (898x39)
+41143 jasmine (2984 x 145)
+1590 adult (48842 x 15)
+41166 volkert (58310 x 181)
 '''
 
 
@@ -52,15 +55,17 @@ n_heads_lst = [4, 8, 16, 32] #4, 8, 16, 32
 embed_dim = [128, 256] #The embedding size is set one by one to avoid the out of memory error {128, 256}
 batch_size = 32 # 32, 64, 128, 256, 512, 1024
 epochs = 100
-sample_size = [80,60,40,20,10,5]
+sample_size = [100,80,60,40,20,10,5]
 seed = 11
 
 
 df_id = 2
 
-name_df = data.get_dataset_name(df_id)
 
-path_of_datset = f'{project_path}/Final_models_4/{name_df}' #The path can be changed
+name_df = data.get_dataset_name(df_id)
+final_models_number = 5
+
+path_of_datset = f'{project_path}/Final_models_{final_models_number}/{name_df}' #The path can be changed
 
 
 tabtrans_dataset_path = f'{path_of_datset}/tabtrans/hyperparameter_selection'
@@ -205,7 +210,7 @@ for sample in sample_size:
             
             # Create the folder and its subfolders (True means that the folder will be created if it does not exist)
             os.makedirs(seed_folder, exist_ok=True)
-          
+        
             #create a random sample of instances 
             general_n_percent = data.reduce_size(y_train, train_indices, val_indices, sample, random_seed)
             

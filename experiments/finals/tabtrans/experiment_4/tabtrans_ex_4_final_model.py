@@ -34,13 +34,15 @@ FINAL DATASETS
 2 anneal (898x39)
 '''
 
-df_id = 2
-sample_sizes = [100] # 100, 80, 60, 40, 20, 10, 5
+df_id = 31
+sample_sizes = [100, 80, 60, 40, 20, 10, 5] # 100, 80, 60, 40, 20, 10, 5
 
 
 name_df = data.get_dataset_name(df_id)
 
-path_of_datset = f'{project_path}/Final_models_4/{name_df}' #The path can be 
+final_models_number = 5
+
+path_of_datset = f'{project_path}/Final_models_{final_models_number}/{name_df}' #The path can be 
 
 path_to_hyperparameters = f'{path_of_datset}/tabtrans/hyperparameter_selection'
 
