@@ -52,7 +52,7 @@ def general_tabtrans(X_train, X_test, y_train, y_test, train_indices, val_indice
     print(f"Number of Heads: {n_heads}")
 
     #parameters for the model
-    ff_pw_size = 30  #this value because of the paper 
+    ff_pw_size = embedding_size  #this value because of the paper 
     attn_dropout = 0.3 #paper
     ff_dropout = 0.1 #paper value
     aggregator = "cls"
